@@ -3,6 +3,8 @@ using OpenAI.SDK.Abstractions;
 using OpenAI.SDK.Configuration;
 using OpenAI.SDK.Exceptions;
 using OpenAI.SDK.Models;
+using OpenAI.SDK.Models.Completions;
+using OpenAI.SDK.Models.Edits;
 using System;
 using System.Collections.Generic;
 using System.Net.Http;
@@ -38,7 +40,10 @@ namespace OpenAI.SDK.Logic
             request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", _options.ApiKey);
             if (body != null)
             {
-                request.Content = JsonContent.Create(body);
+                request.Content = JsonContent.Create(body, options: new JsonSerializerOptions
+                {
+                    IgnoreNullValues = true
+                });
             }
             var client = _clientFactory.CreateClient();
             var response = await client.SendAsync(request);
@@ -54,10 +59,31 @@ namespace OpenAI.SDK.Logic
             }
         }
 
-        public async Task<List<ApiModel>> GetModels()
+        public async Task<List<ApiModel>> GetModelsAsync()
         {
-            var modeilsResponse = await ExecuteRequest<ApiModelsResponse>(HttpMethod.Get, "models");
-            return modeilsResponse.Data;
+            var response = await ExecuteRequest<ApiModelsResponse>(HttpMethod.Get, "models");
+            return response.Data;
         }
+
+        public async Task<ApiModel> GetModelAsync(string modelId)
+        {
+            var response = await ExecuteRequest<ApiModel>(HttpMethod.Get, $"models/{modelId}");
+            return response;
+        }
+
+        public async Task<ApiCompletionResponse> CreateCompletionAsync(ApiCompletionRequest apiCompletionRequest)
+        {
+            var response = await ExecuteRequest<ApiCompletionRequest, ApiCompletionResponse>(HttpMethod.Post, "completions", apiCompletionRequest);
+            return response;
+        }
+
+
+        public async Task<ApiCreateEditRespoinse> CreateEdit(ApiCreateEditRequest createEditRequest)
+        {
+            var response = await ExecuteRequest<ApiCreateEditRequest, ApiCreateEditRespoinse>(HttpMethod.Post, "edits", createEditRequest);
+            return response;
+        }
+
+        
     }
 }

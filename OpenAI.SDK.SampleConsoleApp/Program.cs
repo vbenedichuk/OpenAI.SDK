@@ -35,9 +35,35 @@ namespace OpenAI.SDK.SampleConsoleApp
 
             var serviceProvider = services.BuildServiceProvider();
             var api = serviceProvider.GetRequiredService<IOpenAiAPI>();
-            var models = api.GetModels().Result;
 
-            Console.WriteLine(JsonSerializer.Serialize(models));
+            //var models = api.GetModelsAsync().Result;
+            //Console.WriteLine(JsonSerializer.Serialize(models));
+            var editResult = api.CreateEdit(new Models.Edits.ApiCreateEditRequest
+            {
+                Model = "code-davinci-edit-001",
+                Input= @"    public class ApiCreateEditRequest
+    {
+        [JsonPropertyName(""model"")]
+        public string Model { get; set; }
+        [JsonPropertyName(""input"")]
+        public string Input { get; set; }
+        [JsonPropertyName(""instruction"")]
+        public string Instruction { get; set; }
+        [JsonPropertyName(""temperature"")]
+        public int Temperatue { get; set; }
+        [JsonPropertyName(""top_p"")]
+        public int? TopP { get; set; }
+        [JsonPropertyName(""n"")]
+        public int? N { get; set; }
+    }",
+                Instruction = "this class is a part of chatgpt responses model. Could you please add doc comments to it.",
+                Temperatue = 0
+            }).Result;
+            foreach(var edit in editResult.Choices)
+            {
+                Console.WriteLine(edit.Text);
+            }
+            Console.Write(JsonSerializer.Serialize(editResult));
         }
     }
 }
