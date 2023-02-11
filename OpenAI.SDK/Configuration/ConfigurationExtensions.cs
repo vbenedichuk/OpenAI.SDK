@@ -13,6 +13,8 @@ namespace OpenAI.SDK.Configuration
         {
             services.AddSingleton<IOpenAiAPI, OpenAiApi>();
             services.AddSingleton<IImagesApi, ImagesApi>();
+            services.AddSingleton<IOpenApiEmbeddings, OpenApiEmbeddingsApi>();
+            services.AddSingleton<IOpenApiFiles, OpenApiFiles>();
             return services;
         }
     }
