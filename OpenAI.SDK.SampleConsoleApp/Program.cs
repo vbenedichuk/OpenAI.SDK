@@ -31,7 +31,7 @@ namespace OpenAI.SDK.SampleConsoleApp
                     options.BaseUrl = "https://api.openai.com/v1/";
                 });
             services.AddHttpClient();
-            services.AddTransient<IOpenAiAPI, OpenAiApi>();
+            services.AddOpenAiApi();
 
             var serviceProvider = services.BuildServiceProvider();
             var api = serviceProvider.GetRequiredService<IOpenAiAPI>();
