@@ -33,13 +33,13 @@ namespace OpenAI.SDK.Models.Completions
         /// We generally recommend altering this or top_p but not both.
         /// </summary>
         [JsonPropertyName("temperature")]
-        public float Temperatue { get; set; }
+        public double? Temperatue { get; set; }
         /// <summary>
         /// An alternative to sampling with temperature, called nucleus sampling, where the model considers the results of the tokens with top_p probability mass. So 0.1 means only the tokens comprising the top 10% probability mass are considered.
         /// We generally recommend altering this or temperature but not both.
         /// </summary>
         [JsonPropertyName("top_p")]
-        public float? TopP { get; set; }
+        public double? TopP { get; set; }
         /// <summary>
         /// How many completions to generate for each prompt.
         /// Note: Because this parameter generates many completions, it can quickly consume your token quota.Use carefully and ensure that you have reasonable settings for max_tokens and stop.
@@ -72,14 +72,13 @@ namespace OpenAI.SDK.Models.Completions
         /// <see href="https://platform.openai.com/docs/api-reference/parameter-details">See more information about frequency and presence penalties.</see>
         /// </summary>
         [JsonPropertyName("presence_penalty")]
-        public float? PresencePenalty { get; set; }
+        public double? PresencePenalty { get; set; }
         /// <summary>
         /// Number between -2.0 and 2.0. Positive values penalize new tokens based on their existing frequency in the text so far, decreasing the model's likelihood to repeat the same line verbatim.
         /// <see href="https://platform.openai.com/docs/api-reference/parameter-details">See more information about frequency and presence penalties.</see> 
         /// </summary>
         [JsonPropertyName("frequency_penalty")]
-        public float? FrequencyPenalty { get; set; }
-
+        public double? FrequencyPenalty { get; set; }
         /// <summary>
         /// Generates best_of completions server-side and returns the "best" (the one with the highest log probability per token). Results cannot be streamed.
         /// When used with n, best_of controls the number of candidate completions and n specifies how many to return – best_of must be greater than n.

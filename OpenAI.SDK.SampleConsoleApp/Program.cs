@@ -50,14 +50,14 @@ namespace OpenAI.SDK.SampleConsoleApp
         [JsonPropertyName(""instruction"")]
         public string Instruction { get; set; }
         [JsonPropertyName(""temperature"")]
-        public int Temperatue { get; set; }
+        public double Temperatue { get; set; }
         [JsonPropertyName(""top_p"")]
         public int? TopP { get; set; }
         [JsonPropertyName(""n"")]
         public int? N { get; set; }
     }",
                 Instruction = "this class is a part of chatgpt responses model. Could you please add doc comments to it.",
-                Temperatue = 0
+                Temperatue = 0.5
             }).Result;
             foreach(var edit in editResult.Choices)
             {
