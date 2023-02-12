@@ -1,15 +1,15 @@
 ﻿using System.Collections.Generic;
 using System.Text.Json.Serialization;
 
-namespace OpenAI.SDK.Models.Files
+namespace OpenAI.SDK.Models
 {
-    public class ListFilesResponse
+    public class ListResponse<T>
     {
         /// <summary>
-        /// Files list
+        /// Objects list
         /// </summary>
         [JsonPropertyName("data")]
-        public List<FileDetails> Data { get; set; }
+        public List<T> Data { get; set; }
         /// <summary>
         /// Object type. (list)
         /// </summary>

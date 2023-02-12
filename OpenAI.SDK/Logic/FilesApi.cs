@@ -2,30 +2,30 @@
 using OpenAI.SDK.Abstractions;
 using OpenAI.SDK.Configuration;
 using OpenAI.SDK.Exceptions;
-using OpenAI.SDK.Models.CreateImage;
+using OpenAI.SDK.Models;
 using OpenAI.SDK.Models.Files;
 using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Net.Http;
 using System.Net.Http.Headers;
 using System.Text.Json;
 using System.Threading.Tasks;
-using static System.Net.Mime.MediaTypeNames;
 
 namespace OpenAI.SDK.Logic
 {
-    internal class OpenApiFiles : BaseApi, IOpenApiFiles
+    internal class FilesApi : BaseApi, IFilesApi
     {
-        public OpenApiFiles(IHttpClientFactory clientFactory,
+        public FilesApi(IHttpClientFactory clientFactory,
             IOptions<OpenApiOptions> options) : base(clientFactory, options)
         {
         }
 
         /// <inheritdoc/>
-        public async Task<ListFilesResponse> ListFilesAsync()
+        public async Task<List<FileDetails>> ListFilesAsync()
         {
-            var response = await ExecuteRequest<ListFilesResponse>(HttpMethod.Get, $"files");
-            return response;
+            var response = await ExecuteRequest<ListResponse<FileDetails>>(HttpMethod.Get, $"files");
+            return response.Data;
         }
 
         /// <inheritdoc/>

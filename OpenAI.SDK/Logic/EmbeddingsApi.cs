@@ -7,9 +7,9 @@ using System.Threading.Tasks;
 
 namespace OpenAI.SDK.Logic
 {
-    internal class OpenApiEmbeddingsApi : BaseApi, IOpenApiEmbeddings
+    internal class EmbeddingsApi : BaseApi, IEmbeddingsApi
     {
-        public OpenApiEmbeddingsApi(IHttpClientFactory clientFactory,
+        public EmbeddingsApi(IHttpClientFactory clientFactory,
             IOptions<OpenApiOptions> options) : base(clientFactory, options)
         {
         }

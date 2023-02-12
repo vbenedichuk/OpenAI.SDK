@@ -3,7 +3,7 @@ using System.Threading.Tasks;
 
 namespace OpenAI.SDK.Abstractions
 {
-    public interface IOpenApiEmbeddings
+    public interface IEmbeddingsApi
     {
         Task<EmbeddingsResponse> CreateEmbeddings(EmbeddingsRequest request);
     }
