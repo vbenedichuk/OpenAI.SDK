@@ -34,36 +34,63 @@ namespace OpenAI.SDK.SampleConsoleApp
             services.AddOpenAiApi();
 
             var serviceProvider = services.BuildServiceProvider();
-            var api = serviceProvider.GetRequiredService<IOpenAiAPI>();
+            //var modelsApi = serviceProvider.GetRequiredService<IModelsApi>();
 
-            //var models = api.GetModelsAsync().Result;
+            //var models = modelsApi.GetModelsAsync().Result;
             //Console.WriteLine(JsonSerializer.Serialize(models));
-            var editResult = api.CreateEdit(new Models.Edits.ApiCreateEditRequest
-            {
-                Model = "code-davinci-edit-001",
-                Input= @"    public class ApiCreateEditRequest
-    {
-        [JsonPropertyName(""model"")]
-        public string Model { get; set; }
-        [JsonPropertyName(""input"")]
-        public string Input { get; set; }
-        [JsonPropertyName(""instruction"")]
-        public string Instruction { get; set; }
-        [JsonPropertyName(""temperature"")]
-        public double Temperatue { get; set; }
-        [JsonPropertyName(""top_p"")]
-        public int? TopP { get; set; }
-        [JsonPropertyName(""n"")]
-        public int? N { get; set; }
-    }",
-                Instruction = "this class is a part of chatgpt responses model. Could you please add doc comments to it.",
-                Temperatue = 0.5
-            }).Result;
-            foreach(var edit in editResult.Choices)
-            {
-                Console.WriteLine(edit.Text);
-            }
-            Console.Write(JsonSerializer.Serialize(editResult));
+            //Console.WriteLine("------------------------------------------------------");
+
+            //var completionsApi = serviceProvider.GetRequiredService<ICompletionsApi>();
+
+            //var completionResult = completionsApi.CreateCompletionAsync(new Models.Completions.ApiCompletionRequest
+            //{
+            //    Model = "davinci",
+            //    Prompt =
+            //    new List<string>()
+            //    {
+            //                    @"I celebrate myself, and sing myself,
+            //And what I assume you shall assume,",
+            //                    @"I sing the body electric,
+            //The armies of those I love engirth me and I engirth them,"
+            //    },
+            //    Temperatue = 0.2
+            //}).Result;
+            //foreach (var edit in completionResult.Choices)
+            //{
+            //    Console.WriteLine(edit.Text);
+            //}
+            //Console.WriteLine(JsonSerializer.Serialize(completionResult));
+            //Console.WriteLine("------------------------------------------------------");
+
+            //var editsApi = serviceProvider.GetRequiredService<IEditsApi>();
+            //var editResult = editsApi.CreateEdit(new Models.Edits.ApiCreateEditRequest
+            //{
+            //    Model = "text-davinci-edit-001",
+
+            //    Input = "Iis it possible fix spelling hre?",
+            //    Instruction = "Fix spelling and grammar",
+            //    Temperatue = 0.2
+            //}).Result;
+            //foreach (var edit in editResult.Choices)
+            //{
+            //    Console.WriteLine(edit.Text);
+            //}
+            //Console.WriteLine(JsonSerializer.Serialize(editResult));
+            //Console.WriteLine("------------------------------------------------------");
+
+            var imagesApi = serviceProvider.GetRequiredService<IImagesApi>();
+            //var imageResult = imagesApi.CreateImageAsync(new Models.CreateImage.CreateImageRequest
+            //{
+            //    Prompt = "Green rabbit jumping through the burning circle.",
+            //    N = 3
+            //}).Result;
+            //Console.WriteLine(JsonSerializer.Serialize(imageResult));
+            //Console.WriteLine("------------------------------------------------------");
+
+            var imageStream = File.OpenRead("BlackCircle.png");
+            var imageVariationsResult = imagesApi.CreateImageVariation(imageStream, "image.png", 3, "1024x1024").Result;
+            Console.WriteLine(JsonSerializer.Serialize(imageVariationsResult));
+            Console.WriteLine("------------------------------------------------------");
         }
     }
 }

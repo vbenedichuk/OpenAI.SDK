@@ -15,38 +15,19 @@ using System.Threading.Tasks;
 
 namespace OpenAI.SDK.Logic
 {
-    internal class OpenAiApi : BaseApi, IOpenAiAPI
+
+    internal class CompletionsApi : BaseApi, ICompletionsApi
     {
-        public OpenAiApi(IHttpClientFactory clientFactory,
+        public CompletionsApi(IHttpClientFactory clientFactory,
             IOptions<OpenApiOptions> options) : base(clientFactory, options)
         {
         }
 
-        public async Task<List<ApiModel>> GetModelsAsync()
-        {
-            var response = await ExecuteRequest<ApiModelsResponse>(HttpMethod.Get, "models");
-            return response.Data;
-        }
-
-        public async Task<ApiModel> RetrieveModelAsync(string modelId)
-        {
-            var response = await ExecuteRequest<ApiModel>(HttpMethod.Get, $"models/{modelId}");
-            return response;
-        }
-
+        /// </<inheritdoc/>
         public async Task<ApiCompletionResponse> CreateCompletionAsync(ApiCompletionRequest apiCompletionRequest)
         {
             var response = await ExecuteRequest<ApiCompletionRequest, ApiCompletionResponse>(HttpMethod.Post, "completions", apiCompletionRequest);
             return response;
-        }
-
-
-        public async Task<ApiCreateEditRespoinse> CreateEdit(ApiCreateEditRequest createEditRequest)
-        {
-            var response = await ExecuteRequest<ApiCreateEditRequest, ApiCreateEditRespoinse>(HttpMethod.Post, "edits", createEditRequest);
-            return response;
-        }
-
-        
+        }        
     }
 }

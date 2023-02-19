@@ -40,7 +40,7 @@ namespace OpenAI.SDK.Logic
             {
                 request.Content = JsonContent.Create(body, options: new JsonSerializerOptions
                 {
-                    IgnoreNullValues = true
+                    DefaultIgnoreCondition = System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull
                 });
             }
             var client = _clientFactory.CreateClient();

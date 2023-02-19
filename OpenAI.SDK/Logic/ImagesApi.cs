@@ -7,6 +7,7 @@ using System;
 using System.IO;
 using System.Net.Http;
 using System.Net.Http.Headers;
+using System.Runtime.InteropServices.ComTypes;
 using System.Text.Json;
 using System.Threading.Tasks;
 
@@ -21,17 +22,17 @@ namespace OpenAI.SDK.Logic
 
         public async Task<CreateImageResponse> CreateImageAsync(CreateImageRequest request)
         {
-            var response = await ExecuteRequest<CreateImageResponse>(HttpMethod.Post, "images/generations");
+            var response = await ExecuteRequest<CreateImageRequest,CreateImageResponse>(HttpMethod.Post, "images/generations", request);
             return response;          
         }
 
-        public async Task<CreateImageResponse> CreateImageEditAsync(Stream image, string prompt, Stream mask = null, 
-            int? n = null, string size = null, string responseFormat = null, string user = null)
+        public async Task<CreateImageResponse> CreateImageEditAsync(Stream image, string imageFileName, string prompt, Stream mask = null,
+            string maskFileName = null, int? n = null, string size = null, string responseFormat = null, string user = null)
         {
             var url = new Uri(_baseUri, "images/edits");
             var request = new HttpRequestMessage(HttpMethod.Post, url);
             request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", _options.ApiKey);
-            var content = PrepareRequestContent(image, prompt, mask, n, size, responseFormat, user);
+            var content = PrepareRequestContent(image, imageFileName, prompt, mask, maskFileName, n, size, responseFormat, user);
             request.Content = content;
             var client = _clientFactory.CreateClient();
             var response = await client.SendAsync(request);
@@ -47,12 +48,13 @@ namespace OpenAI.SDK.Logic
             }
         }
 
-        public async Task<CreateImageResponse> CreateImageVariation(Stream image, int? n = null, string size = null, string responseFormat = null, string user = null)
+        public async Task<CreateImageResponse> CreateImageVariation(Stream image, string imageFileName, int? n = null, string size = null, 
+            string responseFormat = null, string user = null)
         {
             var url = new Uri(_baseUri, "images/variations");
             var request = new HttpRequestMessage(HttpMethod.Post, url);
             request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", _options.ApiKey);
-            var content = PrepareRequestContent(image, null, null, n, size, responseFormat, user);
+            var content = PrepareRequestContent(image, imageFileName, null, null, null, n, size, responseFormat, user);
             request.Content = content;
             var client = _clientFactory.CreateClient();
             var response = await client.SendAsync(request);
@@ -68,30 +70,32 @@ namespace OpenAI.SDK.Logic
             }
         }
 
-        private MultipartFormDataContent PrepareRequestContent(Stream image, string prompt, Stream mask = null,
-            int? n = null, string size = null, string responseFormat = null, string user = null)
+        private MultipartFormDataContent PrepareRequestContent(Stream image, string imageFileName, string prompt, Stream mask = null,
+            string maskFileName = null, int? n = null, string size = null, string responseFormat = null, string user = null)
         {
-
-            var content = new MultipartFormDataContent
+            var content = new MultipartFormDataContent() 
             {
-                {new StreamContent(image), "image", "image.png" }
-            };
-            content.Add(new StringContent(prompt), "prompt");
+                { new StreamContent(image), "image", imageFileName }
+            }
+            if (!string.IsNullOrWhiteSpace(prompt))
+            {
+                content.Add(new StringContent(prompt), "prompt");
+            }
             if (mask != null)
             {
-                content.Add(new StreamContent(mask), "mask", "mask.png");
+                content.Add(new StreamContent(mask), "mask", maskFileName);
             }
             if (n != null)
             {
                 content.Add(new StringContent(n.ToString()), "n");
             }
-            if (size != null)
+            if (!string.IsNullOrWhiteSpace(size))
             {
-                content.Add(new StringContent(size.ToString()), "size");
+                content.Add(new StringContent(size), "size");
             }
-            if (responseFormat != null)
+            if (!string.IsNullOrWhiteSpace(responseFormat))
             {
-                content.Add(new StringContent(responseFormat.ToString()), "response_format");
+                content.Add(new StringContent(responseFormat), "response_format");
             }
             if (user != null)
             {

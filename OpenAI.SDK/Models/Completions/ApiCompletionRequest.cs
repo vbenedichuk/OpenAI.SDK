@@ -16,7 +16,7 @@ namespace OpenAI.SDK.Models.Completions
         /// so if a prompt is not specified the model will generate as if from the beginning of a new document.
         /// </summary>
         [JsonPropertyName("prompt")]
-        public string Prompt { get; set; }
+        public List<string> Prompt { get; set; }
         /// <summary>
         /// The suffix that comes after a completion of inserted text.
         /// </summary>
