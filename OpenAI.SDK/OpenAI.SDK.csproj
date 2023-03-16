@@ -2,8 +2,33 @@
 
   <PropertyGroup>
     <TargetFramework>netstandard2.0</TargetFramework>
-    <GeneratePackageOnBuild>False</GeneratePackageOnBuild>
+    <Version>1.1</Version>
+    <GeneratePackageOnBuild>True</GeneratePackageOnBuild>
+    <PackageId>VB.$(AssemblyName)</PackageId>
+    <Title>An integration library for OpenAi SDK</Title>
+    <Authors>Vyacheslav Benedihuk</Authors>
+    <Product>VB.$(AssemblyName)</Product>
+    <Description>Open AI integration api wrapper for .net</Description>
+    <Copyright>(c) 2022-2023 by Vyacheslav Benedichuk</Copyright>
+    <PackageProjectUrl>https://github.com/vbenedichuk/OpenAI.SDK</PackageProjectUrl>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
+    <RepositoryUrl>https://github.com/vbenedichuk</RepositoryUrl>
+    <RepositoryType>https://github.com/vbenedichuk/OpenAI.SDK</RepositoryType>
+    <PackageTags>openai  sdk</PackageTags>
+    <PackageReleaseNotes>Chat api added</PackageReleaseNotes>
+    <PackageLicenseFile>README.md</PackageLicenseFile>
+    <PackageRequireLicenseAcceptance>True</PackageRequireLicenseAcceptance>
+    <IncludeSymbols>True</IncludeSymbols>
+    <SymbolPackageFormat>snupkg</SymbolPackageFormat>
   </PropertyGroup>
+
+  <ItemGroup>
+    <None Include="..\README.md">
+      <Pack>True</Pack>
+      <PackagePath>\</PackagePath>
+    </None>
+  </ItemGroup>
+
 
   <ItemGroup>
     <PackageReference Include="Microsoft.Extensions.Http" Version="7.0.0" />

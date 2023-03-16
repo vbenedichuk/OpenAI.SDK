@@ -73,10 +73,10 @@ namespace OpenAI.SDK.Logic
         private MultipartFormDataContent PrepareRequestContent(Stream image, string imageFileName, string prompt, Stream mask = null,
             string maskFileName = null, int? n = null, string size = null, string responseFormat = null, string user = null)
         {
-            var content = new MultipartFormDataContent() 
+            var content = new MultipartFormDataContent()
             {
                 { new StreamContent(image), "image", imageFileName }
-            }
+            };
             if (!string.IsNullOrWhiteSpace(prompt))
             {
                 content.Add(new StringContent(prompt), "prompt");

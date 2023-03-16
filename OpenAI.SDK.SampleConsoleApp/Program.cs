@@ -3,6 +3,8 @@ using Microsoft.Extensions.DependencyInjection;
 using OpenAI.SDK.Abstractions;
 using OpenAI.SDK.Configuration;
 using OpenAI.SDK.Logic;
+using OpenAI.SDK.Models.Chat;
+using System.Data;
 using System.Text.Json;
 
 namespace OpenAI.SDK.SampleConsoleApp
@@ -34,7 +36,7 @@ namespace OpenAI.SDK.SampleConsoleApp
             services.AddOpenAiApi();
 
             var serviceProvider = services.BuildServiceProvider();
-            //var modelsApi = serviceProvider.GetRequiredService<IModelsApi>();
+            var modelsApi = serviceProvider.GetRequiredService<IModelsApi>();
 
             //var models = modelsApi.GetModelsAsync().Result;
             //Console.WriteLine(JsonSerializer.Serialize(models));
@@ -61,6 +63,18 @@ namespace OpenAI.SDK.SampleConsoleApp
             //}
             //Console.WriteLine(JsonSerializer.Serialize(completionResult));
             //Console.WriteLine("------------------------------------------------------");
+
+            var chatCompletionsApi = serviceProvider.GetRequiredService<IChat>();
+            var chatCompletionResult = chatCompletionsApi.CreateCompletionAsync(new Models.Chat.ApiChatCompletionRequest
+            {
+                Model = "gpt-3.5-turbo",
+                Messages = new List<ChatMessage>
+                {
+                    new ChatMessage{ Role ="user", Content = "Hello!"}
+                }
+            }).Result;
+            Console.WriteLine(JsonSerializer.Serialize(chatCompletionResult));
+            Console.WriteLine("------------------------------------------------------");
 
             //var editsApi = serviceProvider.GetRequiredService<IEditsApi>();
             //var editResult = editsApi.CreateEdit(new Models.Edits.ApiCreateEditRequest

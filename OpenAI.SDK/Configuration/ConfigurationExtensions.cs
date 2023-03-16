@@ -18,6 +18,7 @@ namespace OpenAI.SDK.Configuration
             services.AddSingleton<IEmbeddingsApi, EmbeddingsApi>();
             services.AddSingleton<IFilesApi, FilesApi>();
             services.AddSingleton<IFineTunesApi, FineTunesApi>();
+            services.AddSingleton<IChat, ChatApi>();
             return services;
         }
     }
