@@ -62,7 +62,7 @@ namespace OpenAI.SDK.SampleConsoleApp
             Console.WriteLine(JsonSerializer.Serialize(completionResult));
             Console.WriteLine("------------------------------------------------------");
 
-            var chatCompletionsApi = serviceProvider.GetRequiredService<IChat>();
+            var chatCompletionsApi = serviceProvider.GetRequiredService<IChatApi>();
             var chatCompletionResult = chatCompletionsApi.CreateCompletionAsync(new Models.Chat.ApiChatCompletionRequest
             {
                 Model = "gpt-3.5-turbo",
