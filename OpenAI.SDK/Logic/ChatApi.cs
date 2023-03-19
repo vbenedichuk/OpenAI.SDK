@@ -7,10 +7,10 @@ using System.Threading.Tasks;
 
 namespace OpenAI.SDK.Logic
 {
-    internal class ChatApi : BaseApi, IChat
+    internal class ChatApi : BaseApi, IChatApi
     {
         public ChatApi(IHttpClientFactory clientFactory,
-            IOptions<OpenApiOptions> options) : base(clientFactory, options)
+            IOptions<OpenAiOptions> options) : base(clientFactory, options)
         {
         }
         /// <inheritdoc/>

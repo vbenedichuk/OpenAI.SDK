@@ -19,7 +19,7 @@ namespace OpenAI.SDK.Logic
     internal class CompletionsApi : BaseApi, ICompletionsApi
     {
         public CompletionsApi(IHttpClientFactory clientFactory,
-            IOptions<OpenApiOptions> options) : base(clientFactory, options)
+            IOptions<OpenAiOptions> options) : base(clientFactory, options)
         {
         }
 

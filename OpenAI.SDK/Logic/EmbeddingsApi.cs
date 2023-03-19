@@ -10,7 +10,7 @@ namespace OpenAI.SDK.Logic
     internal class EmbeddingsApi : BaseApi, IEmbeddingsApi
     {
         public EmbeddingsApi(IHttpClientFactory clientFactory,
-            IOptions<OpenApiOptions> options) : base(clientFactory, options)
+            IOptions<OpenAiOptions> options) : base(clientFactory, options)
         {
         }
         public async Task<EmbeddingsResponse> CreateEmbeddings(EmbeddingsRequest request)

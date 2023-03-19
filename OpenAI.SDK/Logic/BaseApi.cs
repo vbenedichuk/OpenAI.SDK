@@ -16,11 +16,11 @@ namespace OpenAI.SDK.Logic
     {
 
         protected readonly IHttpClientFactory _clientFactory;
-        protected readonly OpenApiOptions _options;
+        protected readonly OpenAiOptions _options;
         protected readonly Uri _baseUri;
 
         public BaseApi(IHttpClientFactory clientFactory,
-            IOptions<OpenApiOptions> options)
+            IOptions<OpenAiOptions> options)
         {
             _clientFactory = clientFactory;
             _options = options.Value;

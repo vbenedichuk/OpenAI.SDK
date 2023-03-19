@@ -10,7 +10,7 @@ namespace OpenAI.SDK.Logic
 {
     internal class ModelsApi : BaseApi, IModelsApi
     {
-        public ModelsApi(IHttpClientFactory clientFactory, IOptions<OpenApiOptions> options) : base(clientFactory, options)
+        public ModelsApi(IHttpClientFactory clientFactory, IOptions<OpenAiOptions> options) : base(clientFactory, options)
         {
         }
 

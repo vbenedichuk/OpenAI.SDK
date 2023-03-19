@@ -14,7 +14,7 @@ namespace OpenAI.SDK.Logic
 {
     internal class FineTunesApi : BaseApi, IFineTunesApi
     {
-        public FineTunesApi(IHttpClientFactory clientFactory, IOptions<OpenApiOptions> options) : base(clientFactory, options)
+        public FineTunesApi(IHttpClientFactory clientFactory, IOptions<OpenAiOptions> options) : base(clientFactory, options)
         {
         }
 

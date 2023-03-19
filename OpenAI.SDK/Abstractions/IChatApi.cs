@@ -3,7 +3,7 @@ using System.Threading.Tasks;
 
 namespace OpenAI.SDK.Abstractions
 {
-    public interface IChat
+    public interface IChatApi
     {
         /// <summary>
         /// POST https://api.openai.com/v1/chat/completions 
