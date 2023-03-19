@@ -9,7 +9,7 @@ namespace OpenAI.SDK.Logic
 {
     internal class EditsApi : BaseApi, IEditsApi
     {
-        public EditsApi(IHttpClientFactory clientFactory, IOptions<OpenApiOptions> options) : base(clientFactory, options)
+        public EditsApi(IHttpClientFactory clientFactory, IOptions<OpenAiOptions> options) : base(clientFactory, options)
         {
         }
 

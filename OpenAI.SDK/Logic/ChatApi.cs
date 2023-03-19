@@ -10,7 +10,7 @@ namespace OpenAI.SDK.Logic
     internal class ChatApi : BaseApi, IChat
     {
         public ChatApi(IHttpClientFactory clientFactory,
-            IOptions<OpenApiOptions> options) : base(clientFactory, options)
+            IOptions<OpenAiOptions> options) : base(clientFactory, options)
         {
         }
         /// <inheritdoc/>

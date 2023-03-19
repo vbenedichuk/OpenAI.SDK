@@ -10,7 +10,7 @@ namespace OpenAI.SDK.Logic
 {
     internal class ModerationsApi : BaseApi, IModerationsApi
     {
-        public ModerationsApi(IHttpClientFactory clientFactory, IOptions<OpenApiOptions> options) : base(clientFactory, options)
+        public ModerationsApi(IHttpClientFactory clientFactory, IOptions<OpenAiOptions> options) : base(clientFactory, options)
         {
         }
 

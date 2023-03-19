@@ -16,7 +16,7 @@ namespace OpenAI.SDK.Logic
     internal class ImagesApi : BaseApi, IImagesApi
     {
         public ImagesApi(IHttpClientFactory clientFactory,
-            IOptions<OpenApiOptions> options) : base(clientFactory, options)
+            IOptions<OpenAiOptions> options) : base(clientFactory, options)
         {
         }
 

@@ -2,9 +2,7 @@
 using Microsoft.Extensions.DependencyInjection;
 using OpenAI.SDK.Abstractions;
 using OpenAI.SDK.Configuration;
-using OpenAI.SDK.Logic;
 using OpenAI.SDK.Models.Chat;
-using System.Data;
 using System.Text.Json;
 
 namespace OpenAI.SDK.SampleConsoleApp
@@ -27,7 +25,7 @@ namespace OpenAI.SDK.SampleConsoleApp
             }
 
             var services = new ServiceCollection();
-            services.Configure<OpenApiOptions>(options => 
+            services.Configure<OpenAiOptions>(options => 
                 {
                     options.ApiKey = apiKey;
                     options.BaseUrl = "https://api.openai.com/v1/";
@@ -38,31 +36,31 @@ namespace OpenAI.SDK.SampleConsoleApp
             var serviceProvider = services.BuildServiceProvider();
             var modelsApi = serviceProvider.GetRequiredService<IModelsApi>();
 
-            //var models = modelsApi.GetModelsAsync().Result;
-            //Console.WriteLine(JsonSerializer.Serialize(models));
-            //Console.WriteLine("------------------------------------------------------");
+            var models = modelsApi.GetModelsAsync().Result;
+            Console.WriteLine(JsonSerializer.Serialize(models));
+            Console.WriteLine("------------------------------------------------------");
 
-            //var completionsApi = serviceProvider.GetRequiredService<ICompletionsApi>();
+            var completionsApi = serviceProvider.GetRequiredService<ICompletionsApi>();
 
-            //var completionResult = completionsApi.CreateCompletionAsync(new Models.Completions.ApiCompletionRequest
-            //{
-            //    Model = "davinci",
-            //    Prompt =
-            //    new List<string>()
-            //    {
-            //                    @"I celebrate myself, and sing myself,
-            //And what I assume you shall assume,",
-            //                    @"I sing the body electric,
-            //The armies of those I love engirth me and I engirth them,"
-            //    },
-            //    Temperatue = 0.2
-            //}).Result;
-            //foreach (var edit in completionResult.Choices)
-            //{
-            //    Console.WriteLine(edit.Text);
-            //}
-            //Console.WriteLine(JsonSerializer.Serialize(completionResult));
-            //Console.WriteLine("------------------------------------------------------");
+            var completionResult = completionsApi.CreateCompletionAsync(new Models.Completions.ApiCompletionRequest
+            {
+                Model = "davinci",
+                Prompt =
+                new List<string>()
+                {
+                                @"I celebrate myself, and sing myself,
+            And what I assume you shall assume,",
+                                @"I sing the body electric,
+            The armies of those I love engirth me and I engirth them,"
+                },
+                Temperatue = 0.2
+            }).Result;
+            foreach (var edit in completionResult.Choices)
+            {
+                Console.WriteLine(edit.Text);
+            }
+            Console.WriteLine(JsonSerializer.Serialize(completionResult));
+            Console.WriteLine("------------------------------------------------------");
 
             var chatCompletionsApi = serviceProvider.GetRequiredService<IChat>();
             var chatCompletionResult = chatCompletionsApi.CreateCompletionAsync(new Models.Chat.ApiChatCompletionRequest
@@ -76,30 +74,30 @@ namespace OpenAI.SDK.SampleConsoleApp
             Console.WriteLine(JsonSerializer.Serialize(chatCompletionResult));
             Console.WriteLine("------------------------------------------------------");
 
-            //var editsApi = serviceProvider.GetRequiredService<IEditsApi>();
-            //var editResult = editsApi.CreateEdit(new Models.Edits.ApiCreateEditRequest
-            //{
-            //    Model = "text-davinci-edit-001",
+            var editsApi = serviceProvider.GetRequiredService<IEditsApi>();
+            var editResult = editsApi.CreateEdit(new Models.Edits.ApiCreateEditRequest
+            {
+                Model = "text-davinci-edit-001",
 
-            //    Input = "Iis it possible fix spelling hre?",
-            //    Instruction = "Fix spelling and grammar",
-            //    Temperatue = 0.2
-            //}).Result;
-            //foreach (var edit in editResult.Choices)
-            //{
-            //    Console.WriteLine(edit.Text);
-            //}
-            //Console.WriteLine(JsonSerializer.Serialize(editResult));
-            //Console.WriteLine("------------------------------------------------------");
+                Input = "Iis it possible fix spelling hre?",
+                Instruction = "Fix spelling and grammar",
+                Temperatue = 0.2
+            }).Result;
+            foreach (var edit in editResult.Choices)
+            {
+                Console.WriteLine(edit.Text);
+            }
+            Console.WriteLine(JsonSerializer.Serialize(editResult));
+            Console.WriteLine("------------------------------------------------------");
 
             var imagesApi = serviceProvider.GetRequiredService<IImagesApi>();
-            //var imageResult = imagesApi.CreateImageAsync(new Models.CreateImage.CreateImageRequest
-            //{
-            //    Prompt = "Green rabbit jumping through the burning circle.",
-            //    N = 3
-            //}).Result;
-            //Console.WriteLine(JsonSerializer.Serialize(imageResult));
-            //Console.WriteLine("------------------------------------------------------");
+            var imageResult = imagesApi.CreateImageAsync(new Models.CreateImage.CreateImageRequest
+            {
+                Prompt = "Green rabbit jumping through the burning circle.",
+                N = 3
+            }).Result;
+            Console.WriteLine(JsonSerializer.Serialize(imageResult));
+            Console.WriteLine("------------------------------------------------------");
 
             var imageStream = File.OpenRead("BlackCircle.png");
             var imageVariationsResult = imagesApi.CreateImageVariation(imageStream, "image.png", 3, "1024x1024").Result;
