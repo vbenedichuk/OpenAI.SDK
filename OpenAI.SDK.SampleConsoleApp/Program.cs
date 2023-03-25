@@ -34,6 +34,18 @@ namespace OpenAI.SDK.SampleConsoleApp
             services.AddOpenAiApi();
 
             var serviceProvider = services.BuildServiceProvider();
+
+            var embeddingsApi = serviceProvider.GetRequiredService<IEmbeddingsApi>();
+            var embeddingsResult = embeddingsApi.CreateEmbeddings(new Models.Embeddings.EmbeddingsRequest
+            {
+                Model = "text-embedding-ada-002",
+                Input = new[] { "Just a test string" },
+                User = "VB"
+            }).Result;
+
+
+            Console.WriteLine(JsonSerializer.Serialize(embeddingsResult));
+            Console.WriteLine("------------------------------------------------------");
             var modelsApi = serviceProvider.GetRequiredService<IModelsApi>();
 
             var models = modelsApi.GetModelsAsync().Result;
@@ -103,6 +115,7 @@ namespace OpenAI.SDK.SampleConsoleApp
             var imageVariationsResult = imagesApi.CreateImageVariation(imageStream, "image.png", 3, "1024x1024").Result;
             Console.WriteLine(JsonSerializer.Serialize(imageVariationsResult));
             Console.WriteLine("------------------------------------------------------");
+
         }
     }
 }
