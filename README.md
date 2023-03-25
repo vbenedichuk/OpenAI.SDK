@@ -1,4 +1,5 @@
 # OpenAI.SDK
+[![VB.OpenAI.SDK](https://img.shields.io/nuget/v/VB.OpenAI.SDK?style=for-the-badge)](https://www.nuget.org/packages/VB.OpenAI.SDK/)
 
 ## Introduction
 This library provides openai api wrapper written in C#.
@@ -51,3 +52,8 @@ Feel free to ask questions in [issues section](https://github.com/vbenedichuk/Op
 6. Use it.
 
 
+#Versions history
+- 1.0. First release.
+- 1.1. Chat api support added
+- 1.2. Code cleanup and renamings.
+- 1.3. Embeddings api call fixed.

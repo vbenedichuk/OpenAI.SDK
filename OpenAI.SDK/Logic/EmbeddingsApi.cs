@@ -15,7 +15,7 @@ namespace OpenAI.SDK.Logic
         }
         public async Task<EmbeddingsResponse> CreateEmbeddings(EmbeddingsRequest request)
         {
-            var result = await ExecuteRequest<EmbeddingsResponse>(HttpMethod.Post, "embeddings");
+            var result = await ExecuteRequest<EmbeddingsRequest, EmbeddingsResponse>(HttpMethod.Post, "embeddings", request);
             return result;
         }
     }
