@@ -22,7 +22,7 @@ Following APIs are supported:
 7. [Fine-tunes](https://platform.openai.com/docs/api-reference/fine-tunes). Implemented as IFineTunesApi.
 8. [Moderations](https://platform.openai.com/docs/api-reference/moderations). Implemented as IModerationsApi.
 9. [Engines](https://platform.openai.com/docs/api-reference/engines). Implemented as IEnginesApi.
-10. [Audio] (https://platform.openai.com/docs/api-reference/audio). Implemented as IAudio.
+10. [Audio](https://platform.openai.com/docs/api-reference/audio). Implemented as IAudio.
 
 ## How to use
 This section describes a basic usage scenario for ASP.NET Core Web Api projects.
@@ -32,16 +32,19 @@ Feel free to ask questions in [issues section](https://github.com/vbenedichuk/Op
 1. Create a new ASP.NET Core Web Api project or open the existing one. 
 
 2. Add following lines to the appsettings.json:
-`  "OpenAiOptions": {
+```
+  "OpenAiOptions": {
     "ApiKey": "SET KEY HERE",
     "BaseUrl": "https://api.openai.com/v1/"
-  },`
+  },
+```
 
 3. Configure `OpenAiOptions`.
-`            var builder = WebApplication.CreateBuilder(args);
+```
+            var builder = WebApplication.CreateBuilder(args);
 
             builder.Services.Configure<OpenAiOptions>(builder.Configuration.GetSection(nameof(OpenAiOptions)));
-`
+```
 
 4. Add Http Client
 `
