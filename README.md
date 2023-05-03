@@ -22,6 +22,7 @@ Following APIs are supported:
 7. [Fine-tunes](https://platform.openai.com/docs/api-reference/fine-tunes). Implemented as IFineTunesApi.
 8. [Moderations](https://platform.openai.com/docs/api-reference/moderations). Implemented as IModerationsApi.
 9. [Engines](https://platform.openai.com/docs/api-reference/engines). Implemented as IEnginesApi.
+10. [Audio] (https://platform.openai.com/docs/api-reference/audio). Implemented as IAudio.
 
 ## How to use
 This section describes a basic usage scenario for ASP.NET Core Web Api projects.
@@ -42,18 +43,24 @@ Feel free to ask questions in [issues section](https://github.com/vbenedichuk/Op
             builder.Services.Configure<OpenAiOptions>(builder.Configuration.GetSection(nameof(OpenAiOptions)));
 `
 
-4. Add OpenAiApi to the application Service Collection.
+4. Add Http Client
+`
+            builder.Services.AddHttpClient();
+`
+
+5. Add OpenAiApi to the application Service Collection.
 `
             builder.Services.AddOpenAiApi();
 `
 
-5. Inject required services through constructors or obtain it using IServiceProvider when necessary.
+6. Inject required services through constructors or obtain it using IServiceProvider when necessary.
 
-6. Use it.
+7. Use it.
 
 
-#Versions history
+# Versions history
 - 1.0. First release.
-- 1.1. Chat api support added
+- 1.1. Chat api support added.
 - 1.2. Code cleanup and renamings.
 - 1.3. Embeddings api call fixed.
+- 1.4. Audio api calls are added.

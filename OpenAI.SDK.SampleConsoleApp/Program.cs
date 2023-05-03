@@ -25,7 +25,7 @@ namespace OpenAI.SDK.SampleConsoleApp
             }
 
             var services = new ServiceCollection();
-            services.Configure<OpenAiOptions>(options => 
+            services.Configure<OpenAiOptions>(options =>
                 {
                     options.ApiKey = apiKey;
                     options.BaseUrl = "https://api.openai.com/v1/";
@@ -35,56 +35,56 @@ namespace OpenAI.SDK.SampleConsoleApp
 
             var serviceProvider = services.BuildServiceProvider();
 
-            var embeddingsApi = serviceProvider.GetRequiredService<IEmbeddingsApi>();
-            var embeddingsResult = embeddingsApi.CreateEmbeddings(new Models.Embeddings.EmbeddingsRequest
-            {
-                Model = "text-embedding-ada-002",
-                Input = new[] { "Just a test string" },
-                User = "VB"
-            }).Result;
+            //var embeddingsApi = serviceProvider.GetRequiredService<IEmbeddingsApi>();
+            //var embeddingsResult = embeddingsApi.CreateEmbeddings(new Models.Embeddings.EmbeddingsRequest
+            //{
+            //    Model = "text-embedding-ada-002",
+            //    Input = new[] { "Just a test string" },
+            //    User = "VB"
+            //}).Result;
 
 
-            Console.WriteLine(JsonSerializer.Serialize(embeddingsResult));
-            Console.WriteLine("------------------------------------------------------");
-            var modelsApi = serviceProvider.GetRequiredService<IModelsApi>();
+            //Console.WriteLine(JsonSerializer.Serialize(embeddingsResult));
+            //Console.WriteLine("------------------------------------------------------");
+            //var modelsApi = serviceProvider.GetRequiredService<IModelsApi>();
 
-            var models = modelsApi.GetModelsAsync().Result;
-            Console.WriteLine(JsonSerializer.Serialize(models));
-            Console.WriteLine("------------------------------------------------------");
+            //var models = modelsApi.GetModelsAsync().Result;
+            //Console.WriteLine(JsonSerializer.Serialize(models));
+            //Console.WriteLine("------------------------------------------------------");
 
-            var completionsApi = serviceProvider.GetRequiredService<ICompletionsApi>();
+            //var completionsApi = serviceProvider.GetRequiredService<ICompletionsApi>();
 
-            var completionResult = completionsApi.CreateCompletionAsync(new Models.Completions.ApiCompletionRequest
-            {
-                Model = "davinci",
-                Prompt =
-                new List<string>()
-                {
-                                @"I celebrate myself, and sing myself,
-            And what I assume you shall assume,",
-                                @"I sing the body electric,
-            The armies of those I love engirth me and I engirth them,"
-                },
-                Temperatue = 0.2
-            }).Result;
-            foreach (var edit in completionResult.Choices)
-            {
-                Console.WriteLine(edit.Text);
-            }
-            Console.WriteLine(JsonSerializer.Serialize(completionResult));
-            Console.WriteLine("------------------------------------------------------");
+            //var completionResult = completionsApi.CreateCompletionAsync(new Models.Completions.ApiCompletionRequest
+            //{
+            //    Model = "davinci",
+            //    Prompt =
+            //    new List<string>()
+            //    {
+            //                    @"I celebrate myself, and sing myself,
+            //And what I assume you shall assume,",
+            //                    @"I sing the body electric,
+            //The armies of those I love engirth me and I engirth them,"
+            //    },
+            //    Temperatue = 0.2
+            //}).Result;
+            //foreach (var edit in completionResult.Choices)
+            //{
+            //    Console.WriteLine(edit.Text);
+            //}
+            //Console.WriteLine(JsonSerializer.Serialize(completionResult));
+            //Console.WriteLine("------------------------------------------------------");
 
-            var chatCompletionsApi = serviceProvider.GetRequiredService<IChatApi>();
-            var chatCompletionResult = chatCompletionsApi.CreateCompletionAsync(new Models.Chat.ApiChatCompletionRequest
-            {
-                Model = "gpt-3.5-turbo",
-                Messages = new List<ChatMessage>
-                {
-                    new ChatMessage{ Role ="user", Content = "Hello!"}
-                }
-            }).Result;
-            Console.WriteLine(JsonSerializer.Serialize(chatCompletionResult));
-            Console.WriteLine("------------------------------------------------------");
+            //var chatCompletionsApi = serviceProvider.GetRequiredService<IChatApi>();
+            //var chatCompletionResult = chatCompletionsApi.CreateCompletionAsync(new Models.Chat.ApiChatCompletionRequest
+            //{
+            //    Model = "gpt-3.5-turbo",
+            //    Messages = new List<ChatMessage>
+            //    {
+            //        new ChatMessage{ Role ="user", Content = "Hello!"}
+            //    }
+            //}).Result;
+            //Console.WriteLine(JsonSerializer.Serialize(chatCompletionResult));
+            //Console.WriteLine("------------------------------------------------------");
 
             var editsApi = serviceProvider.GetRequiredService<IEditsApi>();
             var editResult = editsApi.CreateEdit(new Models.Edits.ApiCreateEditRequest
