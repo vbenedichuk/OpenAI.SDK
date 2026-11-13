@@ -1,8 +1,6 @@
-﻿using System;
-using System.Collections.Generic;
-using System.IO;
-using System.Text;
+﻿using System.Collections.Generic;
 using System.Text.Json.Serialization;
+using OpenAI.SDK.Models.Files;
 
 namespace OpenAI.SDK.Models.FineTunes
 {
@@ -25,13 +23,13 @@ namespace OpenAI.SDK.Models.FineTunes
         [JsonPropertyName("organization_id")]
         public string OrganizationId { get; set; }
         [JsonPropertyName("result_files")]
-        public List<FileInfo> ResultFiles { get; set; }
+        public List<FileDetails> ResultFiles { get; set; }
         [JsonPropertyName("status")]
         public string Status { get; set; }
         [JsonPropertyName("validation_files")]
-        public List<FileInfo> ValidationFiles { get; set; }
+        public List<FileDetails> ValidationFiles { get; set; }
         [JsonPropertyName("training_files")]
-        public List<FileInfo> TrainingFiles { get; set; }
+        public List<FileDetails> TrainingFiles { get; set; }
         [JsonPropertyName("updated_at")]
         public long UpdatedAt { get; set; }
     }

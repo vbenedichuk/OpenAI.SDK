@@ -10,7 +10,7 @@ namespace OpenAI.SDK.Models.FineTunes
         public long CreatedAt { get; set; }
         [JsonPropertyName("level")]
         public string Level { get; set; }
-        [JsonPropertyName("messge")]
+        [JsonPropertyName("message")]
         public string Message { get; set; }
     }
 }

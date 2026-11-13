@@ -24,7 +24,7 @@ namespace OpenAI.SDK.Logic
         {
             _clientFactory = clientFactory;
             _options = options.Value;
-            _baseUri = new Uri(_options.BaseUrl);
+            _baseUri = new Uri(_options.BaseUrl.TrimEnd('/') + "/");
         }
         protected async Task<TResult> ExecuteRequest<TResult>(HttpMethod method, string resource)
         {

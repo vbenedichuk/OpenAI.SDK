@@ -35,6 +35,7 @@ namespace OpenAI.SDK.Models.Chat
         public int? N { get; set; }
         /// <summary>
         /// Whether to stream back partial progress. If set, tokens will be sent as data-only <see href="https://developer.mozilla.org/en-US/docs/Web/API/Server-sent_events/Using_server-sent_events#Event_stream_format">server-sent events</see> as they become available, with the stream terminated by a data: [DONE] message.
+        /// This SDK does not support streaming; setting this to <c>true</c> throws <see cref="System.NotSupportedException"/>.
         /// </summary>
         [JsonPropertyName("stream")]
         public bool? Stream { get; set; }

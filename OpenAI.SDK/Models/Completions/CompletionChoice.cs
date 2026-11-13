@@ -9,7 +9,7 @@ namespace OpenAI.SDK.Models.Completions
         [JsonPropertyName("index")]
         public int Index { get; set; }
         [JsonPropertyName("logprobs")]
-        public int? Logprobs { get; set; }
+        public CompletionLogprobs Logprobs { get; set; }
         [JsonPropertyName("finish_reason")]
         public string FinishReason { get; set; }
 

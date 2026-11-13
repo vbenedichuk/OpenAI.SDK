@@ -45,12 +45,17 @@ namespace OpenAI.SDK.Logic
         /// <inheritdoc/>
         public async Task<byte[]> RetrieveFileContentAsync(string fileId)
         {
-            var url = new Uri(_baseUri, "files/{fileId}/content");
+            var url = new Uri(_baseUri, $"files/{fileId}/content");
             var request = new HttpRequestMessage(HttpMethod.Get, url);
             request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", _options.ApiKey);
             var client = _clientFactory.CreateClient();
             var response = await client.SendAsync(request);
-            return await response.Content.ReadAsByteArrayAsync();
+            if (response.IsSuccessStatusCode)
+            {
+                return await response.Content.ReadAsByteArrayAsync();
+            }
+
+            throw new OpenAiApiException(response.StatusCode, await response.Content.ReadAsStringAsync(), response.ReasonPhrase);
         }
 
         /// <inheritdoc/>

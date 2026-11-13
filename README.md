@@ -57,3 +57,4 @@ Feel free to ask questions in [issues section](https://github.com/vbenedichuk/Op
 - 1.1. Chat api support added
 - 1.2. Code cleanup and renamings.
 - 1.3. Embeddings api call fixed.
+- 1.4.0. Fixed file content download, moderation results, fine-tune file deserialization, DI registrations, logprobs mapping, base URL normalization, and streaming validation.

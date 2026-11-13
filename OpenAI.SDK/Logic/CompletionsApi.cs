@@ -26,6 +26,11 @@ namespace OpenAI.SDK.Logic
         /// </<inheritdoc/>
         public async Task<ApiCompletionResponse> CreateCompletionAsync(ApiCompletionRequest apiCompletionRequest)
         {
+            if (apiCompletionRequest.Stream == true)
+            {
+                throw new NotSupportedException("Streaming responses are not supported by this SDK.");
+            }
+
             var response = await ExecuteRequest<ApiCompletionRequest, ApiCompletionResponse>(HttpMethod.Post, "completions", apiCompletionRequest);
             return response;
         }        

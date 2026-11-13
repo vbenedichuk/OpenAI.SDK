@@ -9,6 +9,8 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Tests", "Tests", "{186121F8
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "OpenAI.SDK.SampleConsoleApp", "OpenAI.SDK.SampleConsoleApp\OpenAI.SDK.SampleConsoleApp.csproj", "{9C96C986-0740-4B6F-AEE6-BAD1B5263DDC}"
 EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "OpenAI.SDK.Tests", "OpenAI.SDK.Tests\OpenAI.SDK.Tests.csproj", "{0609134E-D539-44BD-8E17-18AD2807B505}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -23,12 +25,17 @@ Global
 		{9C96C986-0740-4B6F-AEE6-BAD1B5263DDC}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{9C96C986-0740-4B6F-AEE6-BAD1B5263DDC}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{9C96C986-0740-4B6F-AEE6-BAD1B5263DDC}.Release|Any CPU.Build.0 = Release|Any CPU
+		{0609134E-D539-44BD-8E17-18AD2807B505}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{0609134E-D539-44BD-8E17-18AD2807B505}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{0609134E-D539-44BD-8E17-18AD2807B505}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{0609134E-D539-44BD-8E17-18AD2807B505}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
 	EndGlobalSection
 	GlobalSection(NestedProjects) = preSolution
 		{9C96C986-0740-4B6F-AEE6-BAD1B5263DDC} = {186121F8-1FAE-4885-A7A7-8ADE397E87D3}
+		{0609134E-D539-44BD-8E17-18AD2807B505} = {186121F8-1FAE-4885-A7A7-8ADE397E87D3}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {CD2A7BEE-0F3A-4D33-AF07-C37B6FF681E2}

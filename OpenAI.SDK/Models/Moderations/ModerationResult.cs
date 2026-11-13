@@ -6,10 +6,10 @@ namespace OpenAI.SDK.Models.Moderations
     public class ModerationResult
     {
         [JsonPropertyName("categories")]
-        Dictionary<string, bool> Categories { get; set; }
+        public Dictionary<string, bool> Categories { get; set; }
         [JsonPropertyName("category_scores")]
-        Dictionary<string, double> CategoryScores { get; set; }
+        public Dictionary<string, double> CategoryScores { get; set; }
         [JsonPropertyName("flagged")]
-        bool Flagged { get; set; }
+        public bool Flagged { get; set; }
     }
 }

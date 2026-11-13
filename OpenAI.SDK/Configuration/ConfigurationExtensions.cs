@@ -11,6 +11,8 @@ namespace OpenAI.SDK.Configuration
     {
         public static IServiceCollection AddOpenAiApi(this IServiceCollection services)
         {
+            services.AddHttpClient();
+
             services.AddSingleton<IModelsApi, ModelsApi>();
             services.AddSingleton<ICompletionsApi, CompletionsApi>();
             services.AddSingleton<IEditsApi, EditsApi>();
@@ -19,6 +21,8 @@ namespace OpenAI.SDK.Configuration
             services.AddSingleton<IFilesApi, FilesApi>();
             services.AddSingleton<IFineTunesApi, FineTunesApi>();
             services.AddSingleton<IChatApi, ChatApi>();
+            services.AddSingleton<IModerationsApi, ModerationsApi>();
+            services.AddSingleton<IEnginesApi, EnginesApi>();
             return services;
         }
     }
