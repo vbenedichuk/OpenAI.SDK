@@ -34,12 +34,12 @@ namespace OpenAI.SDK.Logic
 
         public async Task<CreateImageResponse> CreateImageEditAsync(Stream image, string imageFileName, string prompt, Stream mask = null,
             string maskFileName = null, int? n = null, string size = null, string responseFormat = null, string user = null,
-            CancellationToken cancellationToken = default)
+            string model = null, CancellationToken cancellationToken = default)
         {
             var url = new Uri(_baseUri, "images/edits");
             using var request = new HttpRequestMessage(HttpMethod.Post, url);
             request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", _options.ApiKey);
-            var content = PrepareRequestContent(image, imageFileName, prompt, mask, maskFileName, n, size, responseFormat, user);
+            var content = PrepareRequestContent(image, imageFileName, prompt, mask, maskFileName, n, size, responseFormat, user, model);
             request.Content = content;
             using var client = _clientFactory.CreateClient();
             using var response = await client.SendAsync(request, cancellationToken);
@@ -70,7 +70,7 @@ namespace OpenAI.SDK.Logic
             var url = new Uri(_baseUri, "images/variations");
             using var request = new HttpRequestMessage(HttpMethod.Post, url);
             request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", _options.ApiKey);
-            var content = PrepareRequestContent(image, imageFileName, null, null, null, n, size, responseFormat, user);
+            var content = PrepareRequestContent(image, imageFileName, null, null, null, n, size, responseFormat, user, null);
             request.Content = content;
             using var client = _clientFactory.CreateClient();
             using var response = await client.SendAsync(request, cancellationToken);
@@ -88,7 +88,7 @@ namespace OpenAI.SDK.Logic
         }
 
         private static MultipartFormDataContent PrepareRequestContent(Stream image, string imageFileName, string prompt, Stream mask = null,
-            string maskFileName = null, int? n = null, string size = null, string responseFormat = null, string user = null)
+            string maskFileName = null, int? n = null, string size = null, string responseFormat = null, string user = null, string model = null)
         {
             var content = new MultipartFormDataContent()
             {
@@ -117,6 +117,10 @@ namespace OpenAI.SDK.Logic
             if (user != null)
             {
                 content.Add(new StringContent(user), "user");
+            }
+            if (!string.IsNullOrWhiteSpace(model))
+            {
+                content.Add(new StringContent(model), "model");
             }
             return content;
         }

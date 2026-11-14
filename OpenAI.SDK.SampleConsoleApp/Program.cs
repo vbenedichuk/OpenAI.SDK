@@ -2,6 +2,7 @@
 using Microsoft.Extensions.DependencyInjection;
 using OpenAI.SDK.Abstractions;
 using OpenAI.SDK.Configuration;
+using OpenAI.SDK.Exceptions;
 using OpenAI.SDK.Models.Chat;
 using System.Text.Json;
 
@@ -9,69 +10,79 @@ namespace OpenAI.SDK.SampleConsoleApp
 {
     internal class Program
     {
-        static void Main(string[] args)
+        static async Task Main(string[] args)
         {
-            var apiKey = string.Empty;
+            var configuration = new ConfigurationBuilder()
+                .AddUserSecrets<Program>()
+                .Build();
 
-            if (System.Diagnostics.Debugger.IsAttached)
+            var apiKey = configuration["OpenAI:Api:ApiKey"]
+                ?? Environment.GetEnvironmentVariable("OPENAI_API_KEY");
+
+            if (string.IsNullOrWhiteSpace(apiKey))
             {
-
-                var builder = new ConfigurationBuilder()
-                    .AddUserSecrets<Program>();
-
-                var configuration = builder.Build();
-
-                apiKey = configuration.GetValue<string>("OpenAI:Api:ApiKey");
+                throw new InvalidOperationException(
+                    "OpenAI API key is not configured. Set it with 'dotnet user-secrets set \"OpenAI:Api:ApiKey\" \"YOUR_KEY\"' " +
+                    "or provide the OPENAI_API_KEY environment variable.");
             }
 
             var services = new ServiceCollection();
-            services.Configure<OpenAiOptions>(options => 
-                {
-                    options.ApiKey = apiKey;
-                    options.BaseUrl = "https://api.openai.com/v1/";
-                });
-            services.AddHttpClient();
+            services.Configure<OpenAiOptions>(options =>
+            {
+                options.ApiKey = apiKey;
+                options.BaseUrl = configuration["OpenAI:Api:BaseUrl"] ?? "https://api.openai.com/v1/";
+            });
             services.AddOpenAiApi();
 
-            var serviceProvider = services.BuildServiceProvider();
+            using var serviceProvider = services.BuildServiceProvider();
 
-            var embeddingsApi = serviceProvider.GetRequiredService<IEmbeddingsApi>();
-            var embeddingsResult = embeddingsApi.CreateEmbeddingsAsync(new Models.Embeddings.EmbeddingsRequest
+            try
             {
-                Model = "text-embedding-ada-002",
-                Input = new[] { "Just a test string" },
-                User = "VB"
-            }, CancellationToken.None).Result;
-
-
-            Console.WriteLine(JsonSerializer.Serialize(embeddingsResult));
-            Console.WriteLine("------------------------------------------------------");
-            var modelsApi = serviceProvider.GetRequiredService<IModelsApi>();
-
-            var models = modelsApi.GetModelsAsync(CancellationToken.None).Result;
-            Console.WriteLine(JsonSerializer.Serialize(models));
-            Console.WriteLine("------------------------------------------------------");
-
-            var chatCompletionsApi = serviceProvider.GetRequiredService<IChatApi>();
-            var chatCompletionResult = chatCompletionsApi.CreateCompletionAsync(new Models.Chat.ApiChatCompletionRequest
-            {
-                Model = "gpt-3.5-turbo",
-                Messages = new List<ChatMessage>
+                var embeddingsApi = serviceProvider.GetRequiredService<IEmbeddingsApi>();
+                var embeddingsResult = await embeddingsApi.CreateEmbeddingsAsync(new Models.Embeddings.EmbeddingsRequest
                 {
-                    new ChatMessage{ Role ="user", Content = "Hello!"}
-                }
-            }, CancellationToken.None).Result;
-            Console.WriteLine(JsonSerializer.Serialize(chatCompletionResult));
-            Console.WriteLine("------------------------------------------------------");
+                    Model = "text-embedding-3-small",
+                    Input = new[] { "Just a test string" }
+                }, CancellationToken.None);
 
-            var imagesApi = serviceProvider.GetRequiredService<IImagesApi>();
-            var imageResult = imagesApi.CreateImageAsync(new Models.CreateImage.CreateImageRequest
+                Console.WriteLine(JsonSerializer.Serialize(embeddingsResult));
+                Console.WriteLine("------------------------------------------------------");
+
+                var modelsApi = serviceProvider.GetRequiredService<IModelsApi>();
+                var models = await modelsApi.GetModelsAsync(CancellationToken.None);
+                Console.WriteLine(JsonSerializer.Serialize(models));
+                Console.WriteLine("------------------------------------------------------");
+
+                var chatCompletionsApi = serviceProvider.GetRequiredService<IChatApi>();
+                var chatCompletionResult = await chatCompletionsApi.CreateCompletionAsync(new Models.Chat.ApiChatCompletionRequest
+                {
+                    Model = "gpt-4o-mini",
+                    Messages = new List<ChatMessage>
+                    {
+                        new ChatMessage { Role = "user", Content = "Hello!" }
+                    }
+                }, CancellationToken.None);
+                Console.WriteLine(JsonSerializer.Serialize(chatCompletionResult));
+                Console.WriteLine("------------------------------------------------------");
+
+                var imagesApi = serviceProvider.GetRequiredService<IImagesApi>();
+                var imageResult = await imagesApi.CreateImageAsync(new Models.CreateImage.CreateImageRequest
+                {
+                    Model = "gpt-image-1",
+                    Prompt = "A green rabbit jumping through a burning circle.",
+                    N = 1
+                }, CancellationToken.None);
+                Console.WriteLine(JsonSerializer.Serialize(imageResult));
+                Console.WriteLine("------------------------------------------------------");
+            }
+            catch (OpenAiApiException ex)
             {
-                Prompt = "Green rabbit jumping through the burning circle.",
-                N = 3
-            }, CancellationToken.None).Result;
-            Console.WriteLine(JsonSerializer.Serialize(imageResult));
-            Console.WriteLine("------------------------------------------------------");
+                Console.Error.WriteLine($"OpenAI API request failed: {(int)ex.StatusCode} {ex.StatusCode}");
+                if (!string.IsNullOrWhiteSpace(ex.ResponseContents))
+                {
+                    Console.Error.WriteLine(ex.ResponseContents);
+                }
+            }
         }
     }
 }

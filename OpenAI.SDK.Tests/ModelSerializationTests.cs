@@ -89,6 +89,27 @@ public class ModelSerializationTests
     }
 
     [Fact]
+    public void CreateImageRequest_SerializesModelAndNewFields()
+    {
+        var request = new OpenAI.SDK.Models.CreateImage.CreateImageRequest
+        {
+            Prompt = "a cat",
+            Model = "gpt-image-1",
+            Quality = "high",
+            OutputFormat = "png",
+            Background = "transparent"
+        };
+
+        var json = JsonSerializer.Serialize(request);
+
+        using var document = JsonDocument.Parse(json);
+        Assert.Equal("gpt-image-1", document.RootElement.GetProperty("model").GetString());
+        Assert.Equal("high", document.RootElement.GetProperty("quality").GetString());
+        Assert.Equal("png", document.RootElement.GetProperty("output_format").GetString());
+        Assert.Equal("transparent", document.RootElement.GetProperty("background").GetString());
+    }
+
+    [Fact]
     public void FineTuneEvent_DeserializesMessage()
     {
         const string json = """

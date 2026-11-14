@@ -68,4 +68,37 @@ public class DependencyInjectionTests
         using var provider = services.BuildServiceProvider();
         Assert.NotNull(provider.GetRequiredService<IChatApi>());
     }
+
+    [Fact]
+    public void AddOpenAiApi_ThrowsClearException_WhenApiKeyMissing()
+    {
+        var services = new ServiceCollection();
+        services.Configure<OpenAiOptions>(options =>
+        {
+            options.BaseUrl = "https://api.openai.com/v1/";
+        });
+
+        services.AddOpenAiApi();
+
+        using var provider = services.BuildServiceProvider();
+        var exception = Assert.Throws<ArgumentException>(() => provider.GetRequiredService<IChatApi>());
+        Assert.Contains("ApiKey", exception.Message, StringComparison.OrdinalIgnoreCase);
+    }
+
+    [Fact]
+    public void AddOpenAiApi_ThrowsClearException_WhenBaseUrlInvalid()
+    {
+        var services = new ServiceCollection();
+        services.Configure<OpenAiOptions>(options =>
+        {
+            options.ApiKey = "test-key";
+            options.BaseUrl = "not-a-url";
+        });
+
+        services.AddOpenAiApi();
+
+        using var provider = services.BuildServiceProvider();
+        var exception = Assert.Throws<ArgumentException>(() => provider.GetRequiredService<IChatApi>());
+        Assert.Contains("BaseUrl", exception.Message, StringComparison.OrdinalIgnoreCase);
+    }
 }

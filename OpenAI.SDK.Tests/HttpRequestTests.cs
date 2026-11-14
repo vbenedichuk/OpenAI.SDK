@@ -204,6 +204,50 @@ public class HttpRequestTests
         Assert.True(handler.LastCancellationToken.CanBeCanceled);
     }
 
+    [Fact]
+    public async Task ChatApi_UsesDefaultBaseUrl_WhenNotConfigured()
+    {
+        var handler = new StubHttpMessageHandler(_ => JsonResponse(ChatCompletionJson));
+        var services = new ServiceCollection();
+        services.Configure<OpenAiOptions>(options =>
+        {
+            options.ApiKey = "test-key";
+        });
+        services.AddSingleton<IHttpClientFactory>(new StubHttpClientFactory(handler));
+        services.AddOpenAiApi();
+        using var provider = services.BuildServiceProvider();
+
+        var chatApi = provider.GetRequiredService<IChatApi>();
+        await chatApi.CreateCompletionAsync(new ApiChatCompletionRequest
+        {
+            Model = "gpt-3.5-turbo",
+            Messages = new List<ChatMessage> { new() { Role = "user", Content = "hi" } }
+        }, CancellationToken.None);
+
+        var request = Assert.Single(handler.Requests);
+        Assert.Equal("https://api.openai.com/v1/chat/completions", request.RequestUri!.AbsoluteUri);
+    }
+
+    [Fact]
+    public async Task CreateImageEditAsync_IncludesModelWhenProvided()
+    {
+        string? requestBody = null;
+        var handler = new StubHttpMessageHandler(request =>
+        {
+            requestBody = request.Content!.ReadAsStringAsync().GetAwaiter().GetResult();
+            return JsonResponse(ImageResponseJson);
+        });
+        using var provider = CreateProvider(handler);
+
+        var imagesApi = provider.GetRequiredService<IImagesApi>();
+        using var image = new MemoryStream(new byte[] { 1, 2, 3 });
+        await imagesApi.CreateImageEditAsync(image, "img.png", "a prompt", model: "gpt-image-1", cancellationToken: CancellationToken.None);
+
+        Assert.NotNull(requestBody);
+        Assert.Contains("name=model", requestBody!);
+        Assert.Contains("gpt-image-1", requestBody!);
+    }
+
 #pragma warning disable CS0618 // The obsolete overload must keep working for backward compatibility.
     [Fact]
     public async Task ChatApi_ObsoleteOverload_StillSendsRequest()

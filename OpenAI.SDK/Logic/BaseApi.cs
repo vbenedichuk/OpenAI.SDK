@@ -30,8 +30,24 @@ namespace OpenAI.SDK.Logic
             IOptions<OpenAiOptions> options)
         {
             _clientFactory = clientFactory;
-            _options = options.Value;
-            _baseUri = new Uri(_options.BaseUrl.TrimEnd('/') + "/");
+            _options = options.Value ?? throw new ArgumentNullException(nameof(options));
+
+            if (string.IsNullOrWhiteSpace(_options.ApiKey))
+            {
+                throw new ArgumentException("OpenAI API key is required. Configure OpenAiOptions.ApiKey (for example via user secrets or environment configuration) before using the SDK.", nameof(options));
+            }
+
+            var baseUrl = string.IsNullOrWhiteSpace(_options.BaseUrl)
+                ? "https://api.openai.com/v1/"
+                : _options.BaseUrl;
+
+            if (!Uri.TryCreate(baseUrl, UriKind.Absolute, out var baseUri) ||
+                (baseUri.Scheme != Uri.UriSchemeHttp && baseUri.Scheme != Uri.UriSchemeHttps))
+            {
+                throw new ArgumentException("OpenAI BaseUrl must be an absolute HTTP(S) URL, for example 'https://api.openai.com/v1/'.", nameof(options));
+            }
+
+            _baseUri = new Uri(baseUri.AbsoluteUri.TrimEnd('/') + "/");
         }
         protected async Task<TResult> ExecuteRequest<TResult>(HttpMethod method, string resource, CancellationToken cancellationToken = default)
         {
