@@ -32,24 +32,17 @@ namespace OpenAI.SDK.Logic
             return response;
         }
 
-        [Obsolete("Use the overload that accepts a CancellationToken.")]
-        public Task<CreateImageResponse> CreateImageEditAsync(Stream image, string imageFileName, string prompt, Stream mask = null,
-            string maskFileName = null, int? n = null, string size = null, string responseFormat = null, string user = null)
-        {
-            return CreateImageEditAsync(image, imageFileName, prompt, mask, maskFileName, n, size, responseFormat, user, CancellationToken.None);
-        }
-
         public async Task<CreateImageResponse> CreateImageEditAsync(Stream image, string imageFileName, string prompt, Stream mask = null,
             string maskFileName = null, int? n = null, string size = null, string responseFormat = null, string user = null,
             CancellationToken cancellationToken = default)
         {
             var url = new Uri(_baseUri, "images/edits");
-            var request = new HttpRequestMessage(HttpMethod.Post, url);
+            using var request = new HttpRequestMessage(HttpMethod.Post, url);
             request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", _options.ApiKey);
             var content = PrepareRequestContent(image, imageFileName, prompt, mask, maskFileName, n, size, responseFormat, user);
             request.Content = content;
-            var client = _clientFactory.CreateClient();
-            var response = await client.SendAsync(request, cancellationToken);
+            using var client = _clientFactory.CreateClient();
+            using var response = await client.SendAsync(request, cancellationToken);
             if (response.IsSuccessStatusCode)
             {
                 using (var stream = await response.Content.ReadAsStreamAsync())
@@ -74,12 +67,12 @@ namespace OpenAI.SDK.Logic
             string responseFormat = null, string user = null, CancellationToken cancellationToken = default)
         {
             var url = new Uri(_baseUri, "images/variations");
-            var request = new HttpRequestMessage(HttpMethod.Post, url);
+            using var request = new HttpRequestMessage(HttpMethod.Post, url);
             request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", _options.ApiKey);
             var content = PrepareRequestContent(image, imageFileName, null, null, null, n, size, responseFormat, user);
             request.Content = content;
-            var client = _clientFactory.CreateClient();
-            var response = await client.SendAsync(request, cancellationToken);
+            using var client = _clientFactory.CreateClient();
+            using var response = await client.SendAsync(request, cancellationToken);
             if (response.IsSuccessStatusCode)
             {
                 using (var stream = await response.Content.ReadAsStreamAsync())
@@ -98,7 +91,7 @@ namespace OpenAI.SDK.Logic
         {
             var content = new MultipartFormDataContent()
             {
-                { new StreamContent(image), "image", imageFileName }
+                { new StreamContent(new NonDisposingStream(image)), "image", imageFileName }
             };
             if (!string.IsNullOrWhiteSpace(prompt))
             {
@@ -106,7 +99,7 @@ namespace OpenAI.SDK.Logic
             }
             if (mask != null)
             {
-                content.Add(new StreamContent(mask), "mask", maskFileName);
+                content.Add(new StreamContent(new NonDisposingStream(mask)), "mask", maskFileName);
             }
             if (n != null)
             {

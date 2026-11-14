@@ -75,10 +75,10 @@ namespace OpenAI.SDK.Logic
         public async Task<byte[]> RetrieveFileContentAsync(string fileId, CancellationToken cancellationToken = default)
         {
             var url = new Uri(_baseUri, $"files/{fileId}/content");
-            var request = new HttpRequestMessage(HttpMethod.Get, url);
+            using var request = new HttpRequestMessage(HttpMethod.Get, url);
             request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", _options.ApiKey);
-            var client = _clientFactory.CreateClient();
-            var response = await client.SendAsync(request, cancellationToken);
+            using var client = _clientFactory.CreateClient();
+            using var response = await client.SendAsync(request, cancellationToken);
             if (response.IsSuccessStatusCode)
             {
                 using (var stream = await response.Content.ReadAsStreamAsync())
@@ -112,17 +112,17 @@ namespace OpenAI.SDK.Logic
         private async Task<FileDetails> UploadFileImplAsync(Stream file, string fileName, string purpose, CancellationToken cancellationToken)
         {
             var url = new Uri(_baseUri, "files");
-            var request = new HttpRequestMessage(HttpMethod.Post, url);
+            using var request = new HttpRequestMessage(HttpMethod.Post, url);
             request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", _options.ApiKey);
 
             var content = new MultipartFormDataContent
             {
-                { new StreamContent(file), "file", fileName },
+                { new StreamContent(new NonDisposingStream(file)), "file", fileName },
                 { new StringContent(purpose), "purpose" }
             };
             request.Content = content;
-            var client = _clientFactory.CreateClient();
-            var response = await client.SendAsync(request, cancellationToken);
+            using var client = _clientFactory.CreateClient();
+            using var response = await client.SendAsync(request, cancellationToken);
             if (response.IsSuccessStatusCode)
             {
                 using (var stream = await response.Content.ReadAsStreamAsync())

@@ -18,6 +18,13 @@ namespace OpenAI.SDK.Abstractions
         [Obsolete("Use the overload that accepts a CancellationToken.")]
         Task<FileDetails> UploadFileAsync(Stream file, string fileName, string purpose);
 
+        /// <summary>
+        /// Uploads a file that can be used across various endpoints.
+        /// </summary>
+        /// <remarks>
+        /// The stream is owned by the caller: this method reads from its current position
+        /// and does not dispose it.
+        /// </remarks>
         Task<FileDetails> UploadFileAsync(Stream file, string fileName, string purpose, CancellationToken cancellationToken = default);
 
         [Obsolete("Use the overload that accepts a CancellationToken.")]

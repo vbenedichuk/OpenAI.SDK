@@ -41,14 +41,14 @@ namespace OpenAI.SDK.Logic
         protected async Task<TResult> ExecuteRequest<TSource, TResult>(HttpMethod method, string resource, TSource body, CancellationToken cancellationToken = default)
         {
             var url = new Uri(_baseUri, resource);
-            var request = new HttpRequestMessage(method, url);
+            using var request = new HttpRequestMessage(method, url);
             request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", _options.ApiKey);
             if (!EqualityComparer<TSource>.Default.Equals(body, default))
             {
                 request.Content = JsonContent.Create(body, options: _requestSerializerOptions);
             }
-            var client = _clientFactory.CreateClient();
-            var response = await client.SendAsync(request, cancellationToken);
+            using var client = _clientFactory.CreateClient();
+            using var response = await client.SendAsync(request, cancellationToken);
             if (response.IsSuccessStatusCode)
             {
                 using (var stream = await response.Content.ReadAsStreamAsync())
