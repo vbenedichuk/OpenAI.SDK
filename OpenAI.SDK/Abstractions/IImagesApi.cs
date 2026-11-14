@@ -44,7 +44,7 @@ namespace OpenAI.SDK.Abstractions
         /// <param name="size">The size of the generated images.</param>
         /// <param name="responseFormat">The format in which the generated images are returned (legacy models).</param>
         /// <param name="user">A unique identifier representing your end-user, which can help OpenAI to monitor and detect abuse.</param>
-        /// <param name="model">The image model to use (for example, gpt-image-1).</param>
+        /// <param name="model">The image model to use (for example, gpt-image-2).</param>
         /// <param name="cancellationToken">A token to cancel the request.</param>
         /// <returns></returns>
         /// <remarks>

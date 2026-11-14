@@ -56,7 +56,7 @@ builder.Services.AddOpenAiApi();
 
 4. Inject required services through constructors or obtain them from `IServiceProvider` when necessary.
 
-5. Use it. For image generation, set `Model` explicitly (for example `gpt-image-1`) on `CreateImageRequest`; for image edits with GPT image models, pass `model` to `CreateImageEditAsync`. Legacy DALL·E 2 behavior is still available when no model is specified.
+5. Use it. For image generation, set `Model` explicitly (for example `gpt-image-2`) on `CreateImageRequest`; for image edits with GPT image models, pass `model` to `CreateImageEditAsync`. Legacy DALL·E 2 behavior is still available when no model is specified.
 
 All API methods accept a `CancellationToken`, so a request can be cancelled when the caller goes away (client disconnect, request timeout, application shutdown):
 

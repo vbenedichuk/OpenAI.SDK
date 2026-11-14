@@ -68,7 +68,7 @@ namespace OpenAI.SDK.SampleConsoleApp
                 var imagesApi = serviceProvider.GetRequiredService<IImagesApi>();
                 var imageResult = await imagesApi.CreateImageAsync(new Models.CreateImage.CreateImageRequest
                 {
-                    Model = "gpt-image-1",
+                    Model = "gpt-image-2",
                     Prompt = "A green rabbit jumping through a burning circle.",
                     N = 1
                 }, CancellationToken.None);

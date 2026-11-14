@@ -11,7 +11,7 @@ namespace OpenAI.SDK.Models.CreateImage
         public string Prompt { get; set; }
 
         /// <summary>
-        /// The image generation model to use (for example, gpt-image-1 or dall-e-2).
+        /// The image generation model to use (for example, gpt-image-2 or dall-e-2).
         /// </summary>
         [JsonPropertyName("model")]
         public string Model { get; set; }

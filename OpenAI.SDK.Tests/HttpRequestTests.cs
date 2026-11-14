@@ -241,11 +241,11 @@ public class HttpRequestTests
 
         var imagesApi = provider.GetRequiredService<IImagesApi>();
         using var image = new MemoryStream(new byte[] { 1, 2, 3 });
-        await imagesApi.CreateImageEditAsync(image, "img.png", "a prompt", model: "gpt-image-1", cancellationToken: CancellationToken.None);
+        await imagesApi.CreateImageEditAsync(image, "img.png", "a prompt", model: "gpt-image-2", cancellationToken: CancellationToken.None);
 
         Assert.NotNull(requestBody);
         Assert.Contains("name=model", requestBody!);
-        Assert.Contains("gpt-image-1", requestBody!);
+        Assert.Contains("gpt-image-2", requestBody!);
     }
 
 #pragma warning disable CS0618 // The obsolete overload must keep working for backward compatibility.

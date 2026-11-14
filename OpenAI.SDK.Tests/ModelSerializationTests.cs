@@ -94,7 +94,7 @@ public class ModelSerializationTests
         var request = new OpenAI.SDK.Models.CreateImage.CreateImageRequest
         {
             Prompt = "a cat",
-            Model = "gpt-image-1",
+            Model = "gpt-image-2",
             Quality = "high",
             OutputFormat = "png",
             Background = "transparent"
@@ -103,7 +103,7 @@ public class ModelSerializationTests
         var json = JsonSerializer.Serialize(request);
 
         using var document = JsonDocument.Parse(json);
-        Assert.Equal("gpt-image-1", document.RootElement.GetProperty("model").GetString());
+        Assert.Equal("gpt-image-2", document.RootElement.GetProperty("model").GetString());
         Assert.Equal("high", document.RootElement.GetProperty("quality").GetString());
         Assert.Equal("png", document.RootElement.GetProperty("output_format").GetString());
         Assert.Equal("transparent", document.RootElement.GetProperty("background").GetString());
