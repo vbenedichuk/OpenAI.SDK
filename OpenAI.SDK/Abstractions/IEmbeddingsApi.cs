@@ -10,6 +10,6 @@ namespace OpenAI.SDK.Abstractions
         [Obsolete("Use the overload that accepts a CancellationToken.")]
         Task<EmbeddingsResponse> CreateEmbeddings(EmbeddingsRequest request);
 
-        Task<EmbeddingsResponse> CreateEmbeddings(EmbeddingsRequest request, CancellationToken cancellationToken = default);
+        Task<EmbeddingsResponse> CreateEmbeddingsAsync(EmbeddingsRequest request, CancellationToken cancellationToken = default);
     }
 }

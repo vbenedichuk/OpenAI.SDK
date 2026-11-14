@@ -17,15 +17,15 @@ namespace OpenAI.SDK.Logic
 
         /// <inheritdoc/>
         [Obsolete("Use the overload that accepts a CancellationToken.")]
-        public Task<ApiCreateEditRespoinse> CreateEdit(ApiCreateEditRequest createEditRequest)
+        public Task<ApiCreateEditResponse> CreateEdit(ApiCreateEditRequest createEditRequest)
         {
-            return CreateEdit(createEditRequest, CancellationToken.None);
+            return CreateEditAsync(createEditRequest, CancellationToken.None);
         }
 
         /// <inheritdoc/>
-        public async Task<ApiCreateEditRespoinse> CreateEdit(ApiCreateEditRequest createEditRequest, CancellationToken cancellationToken = default)
+        public async Task<ApiCreateEditResponse> CreateEditAsync(ApiCreateEditRequest createEditRequest, CancellationToken cancellationToken = default)
         {
-            var response = await ExecuteRequest<ApiCreateEditRequest, ApiCreateEditRespoinse>(HttpMethod.Post, "edits", createEditRequest, cancellationToken);
+            var response = await ExecuteRequest<ApiCreateEditRequest, ApiCreateEditResponse>(HttpMethod.Post, "edits", createEditRequest, cancellationToken);
             return response;
         }
     }

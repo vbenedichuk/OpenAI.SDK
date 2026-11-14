@@ -32,10 +32,10 @@ namespace OpenAI.SDK.Logic
         [Obsolete("Use the overload that accepts a CancellationToken.")]
         public Task<EngineInfo> RetrieveEngine(string engineId)
         {
-            return RetrieveEngine(engineId, CancellationToken.None);
+            return RetrieveEngineAsync(engineId, CancellationToken.None);
         }
 
-        public async Task<EngineInfo> RetrieveEngine(string engineId, CancellationToken cancellationToken = default)
+        public async Task<EngineInfo> RetrieveEngineAsync(string engineId, CancellationToken cancellationToken = default)
         {
             var result = await ExecuteRequest<EngineInfo>(HttpMethod.Get, $"engines/{engineId}", cancellationToken);
             return result;

@@ -19,10 +19,10 @@ namespace OpenAI.SDK.Logic
         [Obsolete("Use the overload that accepts a CancellationToken.")]
         public Task<EmbeddingsResponse> CreateEmbeddings(EmbeddingsRequest request)
         {
-            return CreateEmbeddings(request, CancellationToken.None);
+            return CreateEmbeddingsAsync(request, CancellationToken.None);
         }
 
-        public async Task<EmbeddingsResponse> CreateEmbeddings(EmbeddingsRequest request, CancellationToken cancellationToken = default)
+        public async Task<EmbeddingsResponse> CreateEmbeddingsAsync(EmbeddingsRequest request, CancellationToken cancellationToken = default)
         {
             var result = await ExecuteRequest<EmbeddingsRequest, EmbeddingsResponse>(HttpMethod.Post, "embeddings", request, cancellationToken);
             return result;

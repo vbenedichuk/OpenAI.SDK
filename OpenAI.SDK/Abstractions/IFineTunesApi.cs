@@ -35,7 +35,7 @@ namespace OpenAI.SDK.Abstractions
         [Obsolete("Use the overload that accepts a CancellationToken.")]
         Task<List<FineTuneEvent>> ListFineTuneEvents(string fineTuneId, bool? stream = null);
 
-        Task<List<FineTuneEvent>> ListFineTuneEvents(string fineTuneId, bool? stream = null, CancellationToken cancellationToken = default);
+        Task<List<FineTuneEvent>> ListFineTuneEventsAsync(string fineTuneId, bool? stream = null, CancellationToken cancellationToken = default);
 
         [Obsolete("Use the overload that accepts a CancellationToken.")]
         Task<DeleteFineTuneResponse> DeleteFineTuneModelAsync(string model);

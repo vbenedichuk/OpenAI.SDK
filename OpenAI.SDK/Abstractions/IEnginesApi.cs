@@ -17,6 +17,6 @@ namespace OpenAI.SDK.Abstractions
         [Obsolete("Use the overload that accepts a CancellationToken.")]
         Task<EngineInfo> RetrieveEngine(string engineId);
 
-        Task<EngineInfo> RetrieveEngine(string engineId, CancellationToken cancellationToken = default);
+        Task<EngineInfo> RetrieveEngineAsync(string engineId, CancellationToken cancellationToken = default);
     }
 }

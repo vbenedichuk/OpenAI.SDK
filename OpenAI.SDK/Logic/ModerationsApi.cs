@@ -19,21 +19,21 @@ namespace OpenAI.SDK.Logic
         [Obsolete("Use the overload that accepts a CancellationToken.")]
         public Task<ModerationResponse> CreateModeration(string input, string model = null)
         {
-            return CreateModeration(input, model, CancellationToken.None);
+            return CreateModerationAsync(input, model, CancellationToken.None);
         }
 
-        public Task<ModerationResponse> CreateModeration(string input, string model = null, CancellationToken cancellationToken = default)
+        public Task<ModerationResponse> CreateModerationAsync(string input, string model = null, CancellationToken cancellationToken = default)
         {
-            return CreateModeration(new string[] { input }, model, cancellationToken);
+            return CreateModerationAsync(new string[] { input }, model, cancellationToken);
         }
 
         [Obsolete("Use the overload that accepts a CancellationToken.")]
         public Task<ModerationResponse> CreateModeration(string[] input, string model = null)
         {
-            return CreateModeration(input, model, CancellationToken.None);
+            return CreateModerationAsync(input, model, CancellationToken.None);
         }
 
-        public async Task<ModerationResponse> CreateModeration(string[] input, string model = null, CancellationToken cancellationToken = default)
+        public async Task<ModerationResponse> CreateModerationAsync(string[] input, string model = null, CancellationToken cancellationToken = default)
         {
             var result = await ExecuteRequest<ModerationRequest, ModerationResponse>(HttpMethod.Post, "moderations",
                 new ModerationRequest { Input = new List<string>(input), Model = model }, cancellationToken);

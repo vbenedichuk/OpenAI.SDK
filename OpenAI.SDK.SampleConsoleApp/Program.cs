@@ -36,7 +36,7 @@ namespace OpenAI.SDK.SampleConsoleApp
             var serviceProvider = services.BuildServiceProvider();
 
             var embeddingsApi = serviceProvider.GetRequiredService<IEmbeddingsApi>();
-            var embeddingsResult = embeddingsApi.CreateEmbeddings(new Models.Embeddings.EmbeddingsRequest
+            var embeddingsResult = embeddingsApi.CreateEmbeddingsAsync(new Models.Embeddings.EmbeddingsRequest
             {
                 Model = "text-embedding-ada-002",
                 Input = new[] { "Just a test string" },
@@ -65,7 +65,7 @@ namespace OpenAI.SDK.SampleConsoleApp
                                 @"I sing the body electric,
             The armies of those I love engirth me and I engirth them,"
                 },
-                Temperatue = 0.2
+                Temperature = 0.2
             }, CancellationToken.None).Result;
             foreach (var edit in completionResult.Choices)
             {
@@ -87,13 +87,13 @@ namespace OpenAI.SDK.SampleConsoleApp
             Console.WriteLine("------------------------------------------------------");
 
             var editsApi = serviceProvider.GetRequiredService<IEditsApi>();
-            var editResult = editsApi.CreateEdit(new Models.Edits.ApiCreateEditRequest
+            var editResult = editsApi.CreateEditAsync(new Models.Edits.ApiCreateEditRequest
             {
                 Model = "text-davinci-edit-001",
 
                 Input = "Iis it possible fix spelling hre?",
                 Instruction = "Fix spelling and grammar",
-                Temperatue = 0.2
+                Temperature = 0.2
             }, CancellationToken.None).Result;
             foreach (var edit in editResult.Choices)
             {
@@ -112,7 +112,7 @@ namespace OpenAI.SDK.SampleConsoleApp
             Console.WriteLine("------------------------------------------------------");
 
             var imageStream = File.OpenRead("BlackCircle.png");
-            var imageVariationsResult = imagesApi.CreateImageVariation(imageStream, "image.png", 3, "1024x1024", cancellationToken: CancellationToken.None).Result;
+            var imageVariationsResult = imagesApi.CreateImageVariationAsync(imageStream, "image.png", 3, "1024x1024", cancellationToken: CancellationToken.None).Result;
             Console.WriteLine(JsonSerializer.Serialize(imageVariationsResult));
             Console.WriteLine("------------------------------------------------------");
 

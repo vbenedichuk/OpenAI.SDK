@@ -17,6 +17,11 @@ namespace OpenAI.SDK.Logic
     internal class BaseApi
     {
 
+        private static readonly JsonSerializerOptions _requestSerializerOptions = new JsonSerializerOptions
+        {
+            DefaultIgnoreCondition = System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull
+        };
+
         protected readonly IHttpClientFactory _clientFactory;
         protected readonly OpenAiOptions _options;
         protected readonly Uri _baseUri;
@@ -40,10 +45,7 @@ namespace OpenAI.SDK.Logic
             request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", _options.ApiKey);
             if (!EqualityComparer<TSource>.Default.Equals(body, default))
             {
-                request.Content = JsonContent.Create(body, options: new JsonSerializerOptions
-                {
-                    DefaultIgnoreCondition = System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull
-                });
+                request.Content = JsonContent.Create(body, options: _requestSerializerOptions);
             }
             var client = _clientFactory.CreateClient();
             var response = await client.SendAsync(request, cancellationToken);

@@ -96,7 +96,7 @@ namespace OpenAI.SDK.Abstractions
         /// <param name="user"></param>
         /// <param name="cancellationToken">A token to cancel the request.</param>
         /// <returns></returns>
-        Task<CreateImageResponse> CreateImageVariation(
+        Task<CreateImageResponse> CreateImageVariationAsync(
             Stream image, string imageFileName, int? n = null, string size = null, string responseFormat = null, string user = null,
             CancellationToken cancellationToken = default);
     }

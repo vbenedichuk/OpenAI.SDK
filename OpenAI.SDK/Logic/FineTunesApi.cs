@@ -58,10 +58,10 @@ namespace OpenAI.SDK.Logic
         [Obsolete("Use the overload that accepts a CancellationToken.")]
         public Task<List<FineTuneEvent>> ListFineTuneEvents(string fineTuneId, bool? stream = null)
         {
-            return ListFineTuneEvents(fineTuneId, stream, CancellationToken.None);
+            return ListFineTuneEventsAsync(fineTuneId, stream, CancellationToken.None);
         }
 
-        public async Task<List<FineTuneEvent>> ListFineTuneEvents(string fineTuneId, bool? stream = null, CancellationToken cancellationToken = default)
+        public async Task<List<FineTuneEvent>> ListFineTuneEventsAsync(string fineTuneId, bool? stream = null, CancellationToken cancellationToken = default)
         {
             var response = await ExecuteRequest<ListResponse<FineTuneEvent>>(HttpMethod.Get, $"fine-tunes/{fineTuneId}/events", cancellationToken);
             return response.Data;

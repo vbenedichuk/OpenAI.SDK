@@ -10,11 +10,11 @@ namespace OpenAI.SDK.Abstractions
         [Obsolete("Use the overload that accepts a CancellationToken.")]
         Task<ModerationResponse> CreateModeration(string input, string model = null);
 
-        Task<ModerationResponse> CreateModeration(string input, string model = null, CancellationToken cancellationToken = default);
+        Task<ModerationResponse> CreateModerationAsync(string input, string model = null, CancellationToken cancellationToken = default);
 
         [Obsolete("Use the overload that accepts a CancellationToken.")]
         Task<ModerationResponse> CreateModeration(string[] input, string model = null);
 
-        Task<ModerationResponse> CreateModeration(string[] input, string model = null, CancellationToken cancellationToken = default);
+        Task<ModerationResponse> CreateModerationAsync(string[] input, string model = null, CancellationToken cancellationToken = default);
     }
 }

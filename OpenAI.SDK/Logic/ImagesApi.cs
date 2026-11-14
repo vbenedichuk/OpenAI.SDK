@@ -67,10 +67,10 @@ namespace OpenAI.SDK.Logic
         public Task<CreateImageResponse> CreateImageVariation(Stream image, string imageFileName, int? n = null, string size = null,
             string responseFormat = null, string user = null)
         {
-            return CreateImageVariation(image, imageFileName, n, size, responseFormat, user, CancellationToken.None);
+            return CreateImageVariationAsync(image, imageFileName, n, size, responseFormat, user, CancellationToken.None);
         }
 
-        public async Task<CreateImageResponse> CreateImageVariation(Stream image, string imageFileName, int? n = null, string size = null,
+        public async Task<CreateImageResponse> CreateImageVariationAsync(Stream image, string imageFileName, int? n = null, string size = null,
             string responseFormat = null, string user = null, CancellationToken cancellationToken = default)
         {
             var url = new Uri(_baseUri, "images/variations");

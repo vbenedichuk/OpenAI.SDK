@@ -14,7 +14,7 @@ namespace OpenAI.SDK.Abstractions
         /// <param name="createEditRequest"></param>
         /// <returns></returns>
         [Obsolete("Use the overload that accepts a CancellationToken.")]
-        Task<ApiCreateEditRespoinse> CreateEdit(ApiCreateEditRequest createEditRequest);
+        Task<ApiCreateEditResponse> CreateEdit(ApiCreateEditRequest createEditRequest);
 
         /// <summary>
         /// implements POST https://api.openai.com/v1/edits
@@ -23,6 +23,6 @@ namespace OpenAI.SDK.Abstractions
         /// <param name="createEditRequest"></param>
         /// <param name="cancellationToken">A token to cancel the request.</param>
         /// <returns></returns>
-        Task<ApiCreateEditRespoinse> CreateEdit(ApiCreateEditRequest createEditRequest, CancellationToken cancellationToken = default);
+        Task<ApiCreateEditResponse> CreateEditAsync(ApiCreateEditRequest createEditRequest, CancellationToken cancellationToken = default);
     }
 }
