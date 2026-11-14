@@ -5,6 +5,7 @@ using System.Threading.Tasks;
 
 namespace OpenAI.SDK.Abstractions
 {
+    [Obsolete]
     public interface IEditsApi
     {
         /// <summary>

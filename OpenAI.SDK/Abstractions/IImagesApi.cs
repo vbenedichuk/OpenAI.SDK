@@ -65,7 +65,7 @@ namespace OpenAI.SDK.Abstractions
         /// <param name="responseFormat"></param>
         /// <param name="user"></param>
         /// <returns></returns>
-        [Obsolete("Use the overload that accepts a CancellationToken.")]
+        [Obsolete("The /images/variations endpoint has been retired. Use CreateImageEditAsync with a GPT Image model instead.")]
         Task<CreateImageResponse> CreateImageVariation(
             Stream image, string imageFileName, int? n = null, string size = null, string responseFormat = null, string user = null);
 
@@ -85,6 +85,7 @@ namespace OpenAI.SDK.Abstractions
         /// The <paramref name="image"/> stream is owned by the caller: this method reads from
         /// its current position and does not dispose it.
         /// </remarks>
+        [Obsolete("The /images/variations endpoint has been retired. Use CreateImageEditAsync with a GPT Image model instead.")]
         Task<CreateImageResponse> CreateImageVariationAsync(
             Stream image, string imageFileName, int? n = null, string size = null, string responseFormat = null, string user = null,
             CancellationToken cancellationToken = default);

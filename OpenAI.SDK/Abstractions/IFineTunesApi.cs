@@ -10,6 +10,7 @@ namespace OpenAI.SDK.Abstractions
     /// Manage fine-tuning jobs to tailor a model to your specific training data.
     /// Related guide: <see href="https://platform.openai.com/docs/guides/fine-tuning">Fine-tune models</see>
     /// </summary>
+    [Obsolete]
     public interface IFineTunesApi
     {
         [Obsolete("Use the overload that accepts a CancellationToken.")]

@@ -13,6 +13,7 @@ using System.Threading.Tasks;
 
 namespace OpenAI.SDK.Logic
 {
+    [Obsolete]
     internal class FineTunesApi : BaseApi, IFineTunesApi
     {
         public FineTunesApi(IHttpClientFactory clientFactory, IOptions<OpenAiOptions> options) : base(clientFactory, options)

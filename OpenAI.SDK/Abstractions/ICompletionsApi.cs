@@ -13,6 +13,7 @@ namespace OpenAI.SDK.Abstractions
     /// <summary>
     /// Given a prompt, the model will return one or more predicted completions, and can also return the probabilities of alternative tokens at each position.
     /// </summary>
+    [Obsolete]
     public interface ICompletionsApi
     {
 

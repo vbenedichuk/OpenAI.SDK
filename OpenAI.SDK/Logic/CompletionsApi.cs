@@ -17,6 +17,7 @@ using System.Threading.Tasks;
 namespace OpenAI.SDK.Logic
 {
 
+    [Obsolete]
     internal class CompletionsApi : BaseApi, ICompletionsApi
     {
         public CompletionsApi(IHttpClientFactory clientFactory,

@@ -7,6 +7,7 @@ using System.Threading.Tasks;
 
 namespace OpenAI.SDK.Abstractions
 {
+    [Obsolete]
     public interface IEnginesApi
     {
         [Obsolete("Use the overload that accepts a CancellationToken.")]

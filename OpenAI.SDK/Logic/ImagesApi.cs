@@ -56,13 +56,14 @@ namespace OpenAI.SDK.Logic
             }
         }
 
-        [Obsolete("Use the overload that accepts a CancellationToken.")]
+        [Obsolete("The /images/variations endpoint has been retired. Use CreateImageEditAsync with a GPT Image model instead.")]
         public Task<CreateImageResponse> CreateImageVariation(Stream image, string imageFileName, int? n = null, string size = null,
             string responseFormat = null, string user = null)
         {
             return CreateImageVariationAsync(image, imageFileName, n, size, responseFormat, user, CancellationToken.None);
         }
 
+        [Obsolete("The /images/variations endpoint has been retired. Use CreateImageEditAsync with a GPT Image model instead.")]
         public async Task<CreateImageResponse> CreateImageVariationAsync(Stream image, string imageFileName, int? n = null, string size = null,
             string responseFormat = null, string user = null, CancellationToken cancellationToken = default)
         {
