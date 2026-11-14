@@ -36,15 +36,21 @@ public class DependencyInjectionTests
 
         using var provider = services.BuildServiceProvider();
         Assert.NotNull(provider.GetService<IModelsApi>());
+#pragma warning disable CS0612 // Retired APIs stay registered for backward compatibility.
         Assert.NotNull(provider.GetService<ICompletionsApi>());
         Assert.NotNull(provider.GetService<IEditsApi>());
+#pragma warning restore CS0612
         Assert.NotNull(provider.GetService<IImagesApi>());
         Assert.NotNull(provider.GetService<IEmbeddingsApi>());
         Assert.NotNull(provider.GetService<IFilesApi>());
+#pragma warning disable CS0612 // Retired APIs stay registered for backward compatibility.
         Assert.NotNull(provider.GetService<IFineTunesApi>());
+#pragma warning restore CS0612
         Assert.NotNull(provider.GetService<IChatApi>());
         Assert.NotNull(provider.GetService<IModerationsApi>());
+#pragma warning disable CS0612 // Retired APIs stay registered for backward compatibility.
         Assert.NotNull(provider.GetService<IEnginesApi>());
+#pragma warning restore CS0612
     }
 
     [Fact]

@@ -58,6 +58,7 @@ public class MultipartStreamOwnershipTests
         Assert.Contains("a prompt", handler.RequestBody);
     }
 
+#pragma warning disable CS0618 // Retired API must keep working for backward compatibility.
     [Fact]
     public async Task CreateImageVariationAsync_DoesNotDisposeCallerStream()
     {
@@ -72,6 +73,7 @@ public class MultipartStreamOwnershipTests
         Assert.Equal(3, image.Length);
         Assert.Contains("name=image", handler.RequestBody);
     }
+#pragma warning restore CS0618
 
     private static ServiceProvider CreateProvider(HttpMessageHandler handler)
     {

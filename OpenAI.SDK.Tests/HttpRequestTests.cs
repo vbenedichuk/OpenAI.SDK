@@ -99,6 +99,7 @@ public class HttpRequestTests
         Assert.Empty(handler.Requests);
     }
 
+#pragma warning disable CS0612 // Retired API must keep working for backward compatibility.
     [Fact]
     public async Task CompletionsApi_RejectsStreamingRequestBeforeSendingIt()
     {
@@ -126,6 +127,7 @@ public class HttpRequestTests
 
         Assert.Empty(handler.Requests);
     }
+#pragma warning restore CS0612
 
     [Fact]
     public async Task ChatApi_ForwardsCancellationToken()

@@ -52,28 +52,6 @@ namespace OpenAI.SDK.SampleConsoleApp
             Console.WriteLine(JsonSerializer.Serialize(models));
             Console.WriteLine("------------------------------------------------------");
 
-            var completionsApi = serviceProvider.GetRequiredService<ICompletionsApi>();
-
-            var completionResult = completionsApi.CreateCompletionAsync(new Models.Completions.ApiCompletionRequest
-            {
-                Model = "davinci",
-                Prompt =
-                new List<string>()
-                {
-                                @"I celebrate myself, and sing myself,
-            And what I assume you shall assume,",
-                                @"I sing the body electric,
-            The armies of those I love engirth me and I engirth them,"
-                },
-                Temperature = 0.2
-            }, CancellationToken.None).Result;
-            foreach (var edit in completionResult.Choices)
-            {
-                Console.WriteLine(edit.Text);
-            }
-            Console.WriteLine(JsonSerializer.Serialize(completionResult));
-            Console.WriteLine("------------------------------------------------------");
-
             var chatCompletionsApi = serviceProvider.GetRequiredService<IChatApi>();
             var chatCompletionResult = chatCompletionsApi.CreateCompletionAsync(new Models.Chat.ApiChatCompletionRequest
             {
@@ -86,22 +64,6 @@ namespace OpenAI.SDK.SampleConsoleApp
             Console.WriteLine(JsonSerializer.Serialize(chatCompletionResult));
             Console.WriteLine("------------------------------------------------------");
 
-            var editsApi = serviceProvider.GetRequiredService<IEditsApi>();
-            var editResult = editsApi.CreateEditAsync(new Models.Edits.ApiCreateEditRequest
-            {
-                Model = "text-davinci-edit-001",
-
-                Input = "Iis it possible fix spelling hre?",
-                Instruction = "Fix spelling and grammar",
-                Temperature = 0.2
-            }, CancellationToken.None).Result;
-            foreach (var edit in editResult.Choices)
-            {
-                Console.WriteLine(edit.Text);
-            }
-            Console.WriteLine(JsonSerializer.Serialize(editResult));
-            Console.WriteLine("------------------------------------------------------");
-
             var imagesApi = serviceProvider.GetRequiredService<IImagesApi>();
             var imageResult = imagesApi.CreateImageAsync(new Models.CreateImage.CreateImageRequest
             {
@@ -110,12 +72,6 @@ namespace OpenAI.SDK.SampleConsoleApp
             }, CancellationToken.None).Result;
             Console.WriteLine(JsonSerializer.Serialize(imageResult));
             Console.WriteLine("------------------------------------------------------");
-
-            var imageStream = File.OpenRead("BlackCircle.png");
-            var imageVariationsResult = imagesApi.CreateImageVariationAsync(imageStream, "image.png", 3, "1024x1024", cancellationToken: CancellationToken.None).Result;
-            Console.WriteLine(JsonSerializer.Serialize(imageVariationsResult));
-            Console.WriteLine("------------------------------------------------------");
-
         }
     }
 }
