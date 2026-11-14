@@ -22,6 +22,14 @@ public class HttpRequestTests
         }
         """;
 
+    private const string ModelsListJson = """
+        { "object": "list", "data": [] }
+        """;
+
+    private const string ImageResponseJson = """
+        { "created": 1, "data": [] }
+        """;
+
     [Fact]
     public async Task RetrieveFileContent_UsesActualFileIdInRequestUrl()
     {
@@ -32,7 +40,7 @@ public class HttpRequestTests
         using var provider = CreateProvider(handler);
 
         var filesApi = provider.GetRequiredService<IFilesApi>();
-        var content = await filesApi.RetrieveFileContentAsync("file-123");
+        var content = await filesApi.RetrieveFileContentAsync("file-123", CancellationToken.None);
 
         Assert.Equal(new byte[] { 1, 2, 3 }, content);
         var request = Assert.Single(handler.Requests);
@@ -51,7 +59,7 @@ public class HttpRequestTests
 
         var filesApi = provider.GetRequiredService<IFilesApi>();
 
-        var exception = await Assert.ThrowsAsync<OpenAiApiException>(() => filesApi.RetrieveFileContentAsync("missing"));
+        var exception = await Assert.ThrowsAsync<OpenAiApiException>(() => filesApi.RetrieveFileContentAsync("missing", CancellationToken.None));
         Assert.Equal(HttpStatusCode.NotFound, exception.StatusCode);
         Assert.Contains("not found", exception.ResponseContents);
     }
@@ -67,7 +75,7 @@ public class HttpRequestTests
         {
             Model = "gpt-3.5-turbo",
             Messages = new List<ChatMessage> { new() { Role = "user", Content = "hi" } }
-        });
+        }, CancellationToken.None);
 
         var request = Assert.Single(handler.Requests);
         Assert.Equal("https://api.openai.com/v1/chat/completions", request.RequestUri!.AbsoluteUri);
@@ -86,7 +94,7 @@ public class HttpRequestTests
             Model = "gpt-3.5-turbo",
             Messages = new List<ChatMessage> { new() { Role = "user", Content = "hi" } },
             Stream = true
-        }));
+        }, CancellationToken.None));
 
         Assert.Empty(handler.Requests);
     }
@@ -114,10 +122,104 @@ public class HttpRequestTests
             Model = "davinci",
             Prompt = new List<string> { "hi" },
             Stream = true
-        }));
+        }, CancellationToken.None));
 
         Assert.Empty(handler.Requests);
     }
+
+    [Fact]
+    public async Task ChatApi_ForwardsCancellationToken()
+    {
+        using var cts = new CancellationTokenSource();
+        var handler = new StubHttpMessageHandler(_ => JsonResponse(ChatCompletionJson));
+        using var provider = CreateProvider(handler);
+
+        var chatApi = provider.GetRequiredService<IChatApi>();
+        await chatApi.CreateCompletionAsync(new ApiChatCompletionRequest
+        {
+            Model = "gpt-3.5-turbo",
+            Messages = new List<ChatMessage> { new() { Role = "user", Content = "hi" } }
+        }, cts.Token);
+
+        Assert.True(handler.LastCancellationToken.CanBeCanceled);
+    }
+
+    [Fact]
+    public async Task ChatApi_HonorsPreCanceledToken()
+    {
+        var handler = new StubHttpMessageHandler(_ => JsonResponse(ChatCompletionJson));
+        using var provider = CreateProvider(handler);
+
+        var chatApi = provider.GetRequiredService<IChatApi>();
+
+        await Assert.ThrowsAnyAsync<OperationCanceledException>(() => chatApi.CreateCompletionAsync(new ApiChatCompletionRequest
+        {
+            Model = "gpt-3.5-turbo",
+            Messages = new List<ChatMessage> { new() { Role = "user", Content = "hi" } }
+        }, new CancellationToken(canceled: true)));
+    }
+
+    [Fact]
+    public async Task ModelsApi_ForwardsCancellationToken()
+    {
+        using var cts = new CancellationTokenSource();
+        var handler = new StubHttpMessageHandler(_ => JsonResponse(ModelsListJson));
+        using var provider = CreateProvider(handler);
+
+        var modelsApi = provider.GetRequiredService<IModelsApi>();
+        await modelsApi.GetModelsAsync(cts.Token);
+
+        Assert.True(handler.LastCancellationToken.CanBeCanceled);
+    }
+
+    [Fact]
+    public async Task RetrieveFileContentAsync_ForwardsCancellationToken()
+    {
+        using var cts = new CancellationTokenSource();
+        var handler = new StubHttpMessageHandler(_ => new HttpResponseMessage(HttpStatusCode.OK)
+        {
+            Content = new ByteArrayContent(new byte[] { 1, 2, 3 })
+        });
+        using var provider = CreateProvider(handler);
+
+        var filesApi = provider.GetRequiredService<IFilesApi>();
+        await filesApi.RetrieveFileContentAsync("file-123", cts.Token);
+
+        Assert.True(handler.LastCancellationToken.CanBeCanceled);
+    }
+
+    [Fact]
+    public async Task CreateImageEditAsync_ForwardsCancellationToken()
+    {
+        using var cts = new CancellationTokenSource();
+        var handler = new StubHttpMessageHandler(_ => JsonResponse(ImageResponseJson));
+        using var provider = CreateProvider(handler);
+
+        var imagesApi = provider.GetRequiredService<IImagesApi>();
+        using var image = new MemoryStream(new byte[] { 1, 2, 3 });
+        await imagesApi.CreateImageEditAsync(image, "img.png", "a prompt", cancellationToken: cts.Token);
+
+        Assert.True(handler.LastCancellationToken.CanBeCanceled);
+    }
+
+#pragma warning disable CS0618 // The obsolete overload must keep working for backward compatibility.
+    [Fact]
+    public async Task ChatApi_ObsoleteOverload_StillSendsRequest()
+    {
+        var handler = new StubHttpMessageHandler(_ => JsonResponse(ChatCompletionJson));
+        using var provider = CreateProvider(handler);
+
+        var chatApi = provider.GetRequiredService<IChatApi>();
+        var result = await chatApi.CreateCompletionAsync(new ApiChatCompletionRequest
+        {
+            Model = "gpt-3.5-turbo",
+            Messages = new List<ChatMessage> { new() { Role = "user", Content = "hi" } }
+        });
+
+        Assert.NotNull(result);
+        Assert.Single(handler.Requests);
+    }
+#pragma warning restore CS0618
 
     private static ServiceProvider CreateProvider(HttpMessageHandler handler, string baseUrl = "https://api.openai.com/v1/")
     {
@@ -154,9 +256,12 @@ public class HttpRequestTests
 
         public List<HttpRequestMessage> Requests { get; } = new();
 
+        public CancellationToken LastCancellationToken { get; private set; }
+
         protected override Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken)
         {
             Requests.Add(request);
+            LastCancellationToken = cancellationToken;
             return Task.FromResult(_responder(request));
         }
     }

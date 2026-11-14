@@ -11,6 +11,7 @@ using System.Net.Http;
 using System.Net.Http.Headers;
 using System.Net.Http.Json;
 using System.Text.Json;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace OpenAI.SDK.Logic
@@ -23,15 +24,22 @@ namespace OpenAI.SDK.Logic
         {
         }
 
-        /// </<inheritdoc/>
-        public async Task<ApiCompletionResponse> CreateCompletionAsync(ApiCompletionRequest apiCompletionRequest)
+        /// <inheritdoc/>
+        [Obsolete("Use the overload that accepts a CancellationToken.")]
+        public Task<ApiCompletionResponse> CreateCompletionAsync(ApiCompletionRequest apiCompletionRequest)
+        {
+            return CreateCompletionAsync(apiCompletionRequest, CancellationToken.None);
+        }
+
+        /// <inheritdoc/>
+        public async Task<ApiCompletionResponse> CreateCompletionAsync(ApiCompletionRequest apiCompletionRequest, CancellationToken cancellationToken = default)
         {
             if (apiCompletionRequest.Stream == true)
             {
                 throw new NotSupportedException("Streaming responses are not supported by this SDK.");
             }
 
-            var response = await ExecuteRequest<ApiCompletionRequest, ApiCompletionResponse>(HttpMethod.Post, "completions", apiCompletionRequest);
+            var response = await ExecuteRequest<ApiCompletionRequest, ApiCompletionResponse>(HttpMethod.Post, "completions", apiCompletionRequest, cancellationToken);
             return response;
         }        
     }

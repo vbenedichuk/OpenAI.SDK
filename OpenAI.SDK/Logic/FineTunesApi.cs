@@ -8,6 +8,7 @@ using System;
 using System.Collections.Generic;
 using System.Net.Http;
 using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace OpenAI.SDK.Logic
@@ -18,39 +19,75 @@ namespace OpenAI.SDK.Logic
         {
         }
 
-        public async Task<FineTune> CancelFineTuneAsync(string fineTuneId)
+        [Obsolete("Use the overload that accepts a CancellationToken.")]
+        public Task<FineTune> CancelFineTuneAsync(string fineTuneId)
         {
-            var response = await ExecuteRequest<FineTune>(HttpMethod.Post, $"fine-tunes/{fineTuneId}/cancel");
+            return CancelFineTuneAsync(fineTuneId, CancellationToken.None);
+        }
+
+        public async Task<FineTune> CancelFineTuneAsync(string fineTuneId, CancellationToken cancellationToken = default)
+        {
+            var response = await ExecuteRequest<FineTune>(HttpMethod.Post, $"fine-tunes/{fineTuneId}/cancel", cancellationToken);
             return response;
         }
 
-        public async Task<FineTune> CreateFineTuneAsync(CreateFineTuneRequest request)
+        [Obsolete("Use the overload that accepts a CancellationToken.")]
+        public Task<FineTune> CreateFineTuneAsync(CreateFineTuneRequest request)
         {
-            var response = await ExecuteRequest<CreateFineTuneRequest, FineTune>(HttpMethod.Post, "fine-tunes", request);
+            return CreateFineTuneAsync(request, CancellationToken.None);
+        }
+
+        public async Task<FineTune> CreateFineTuneAsync(CreateFineTuneRequest request, CancellationToken cancellationToken = default)
+        {
+            var response = await ExecuteRequest<CreateFineTuneRequest, FineTune>(HttpMethod.Post, "fine-tunes", request, cancellationToken);
             return response;
         }
 
-        public async Task<DeleteFineTuneResponse> DeleteFineTuneModelAsync(string model)
+        [Obsolete("Use the overload that accepts a CancellationToken.")]
+        public Task<DeleteFineTuneResponse> DeleteFineTuneModelAsync(string model)
         {
-            var response = await ExecuteRequest<DeleteFineTuneResponse>(HttpMethod.Delete, $"models/{model}");
+            return DeleteFineTuneModelAsync(model, CancellationToken.None);
+        }
+
+        public async Task<DeleteFineTuneResponse> DeleteFineTuneModelAsync(string model, CancellationToken cancellationToken = default)
+        {
+            var response = await ExecuteRequest<DeleteFineTuneResponse>(HttpMethod.Delete, $"models/{model}", cancellationToken);
             return response;
         }
 
-        public async Task<List<FineTuneEvent>> ListFineTuneEvents(string fineTuneId, bool? stream = null)
+        [Obsolete("Use the overload that accepts a CancellationToken.")]
+        public Task<List<FineTuneEvent>> ListFineTuneEvents(string fineTuneId, bool? stream = null)
         {
-            var response = await ExecuteRequest<ListResponse<FineTuneEvent>>(HttpMethod.Get, $"fine-tunes/{fineTuneId}/events");
+            return ListFineTuneEvents(fineTuneId, stream, CancellationToken.None);
+        }
+
+        public async Task<List<FineTuneEvent>> ListFineTuneEvents(string fineTuneId, bool? stream = null, CancellationToken cancellationToken = default)
+        {
+            var response = await ExecuteRequest<ListResponse<FineTuneEvent>>(HttpMethod.Get, $"fine-tunes/{fineTuneId}/events", cancellationToken);
             return response.Data;
         }
 
-        public async Task<List<FineTune>> ListFineTunesAsync()
+        [Obsolete("Use the overload that accepts a CancellationToken.")]
+        public Task<List<FineTune>> ListFineTunesAsync()
         {
-            var response = await ExecuteRequest<ListResponse<FineTune>>(HttpMethod.Get, $"fine-tunes");
+            return ListFineTunesAsync(CancellationToken.None);
+        }
+
+        public async Task<List<FineTune>> ListFineTunesAsync(CancellationToken cancellationToken = default)
+        {
+            var response = await ExecuteRequest<ListResponse<FineTune>>(HttpMethod.Get, $"fine-tunes", cancellationToken);
             return response.Data;
         }
 
-        public async Task<FineTune> RetrieveFineTuneAsync(string fineTuneId)
+        [Obsolete("Use the overload that accepts a CancellationToken.")]
+        public Task<FineTune> RetrieveFineTuneAsync(string fineTuneId)
         {
-            var response = await ExecuteRequest<FineTune>(HttpMethod.Get, $"fine-tunes/{fineTuneId}");
+            return RetrieveFineTuneAsync(fineTuneId, CancellationToken.None);
+        }
+
+        public async Task<FineTune> RetrieveFineTuneAsync(string fineTuneId, CancellationToken cancellationToken = default)
+        {
+            var response = await ExecuteRequest<FineTune>(HttpMethod.Get, $"fine-tunes/{fineTuneId}", cancellationToken);
             return response;
         }
     }

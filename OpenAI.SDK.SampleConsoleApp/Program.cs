@@ -41,14 +41,14 @@ namespace OpenAI.SDK.SampleConsoleApp
                 Model = "text-embedding-ada-002",
                 Input = new[] { "Just a test string" },
                 User = "VB"
-            }).Result;
+            }, CancellationToken.None).Result;
 
 
             Console.WriteLine(JsonSerializer.Serialize(embeddingsResult));
             Console.WriteLine("------------------------------------------------------");
             var modelsApi = serviceProvider.GetRequiredService<IModelsApi>();
 
-            var models = modelsApi.GetModelsAsync().Result;
+            var models = modelsApi.GetModelsAsync(CancellationToken.None).Result;
             Console.WriteLine(JsonSerializer.Serialize(models));
             Console.WriteLine("------------------------------------------------------");
 
@@ -66,7 +66,7 @@ namespace OpenAI.SDK.SampleConsoleApp
             The armies of those I love engirth me and I engirth them,"
                 },
                 Temperatue = 0.2
-            }).Result;
+            }, CancellationToken.None).Result;
             foreach (var edit in completionResult.Choices)
             {
                 Console.WriteLine(edit.Text);
@@ -82,7 +82,7 @@ namespace OpenAI.SDK.SampleConsoleApp
                 {
                     new ChatMessage{ Role ="user", Content = "Hello!"}
                 }
-            }).Result;
+            }, CancellationToken.None).Result;
             Console.WriteLine(JsonSerializer.Serialize(chatCompletionResult));
             Console.WriteLine("------------------------------------------------------");
 
@@ -94,7 +94,7 @@ namespace OpenAI.SDK.SampleConsoleApp
                 Input = "Iis it possible fix spelling hre?",
                 Instruction = "Fix spelling and grammar",
                 Temperatue = 0.2
-            }).Result;
+            }, CancellationToken.None).Result;
             foreach (var edit in editResult.Choices)
             {
                 Console.WriteLine(edit.Text);
@@ -107,12 +107,12 @@ namespace OpenAI.SDK.SampleConsoleApp
             {
                 Prompt = "Green rabbit jumping through the burning circle.",
                 N = 3
-            }).Result;
+            }, CancellationToken.None).Result;
             Console.WriteLine(JsonSerializer.Serialize(imageResult));
             Console.WriteLine("------------------------------------------------------");
 
             var imageStream = File.OpenRead("BlackCircle.png");
-            var imageVariationsResult = imagesApi.CreateImageVariation(imageStream, "image.png", 3, "1024x1024").Result;
+            var imageVariationsResult = imagesApi.CreateImageVariation(imageStream, "image.png", 3, "1024x1024", cancellationToken: CancellationToken.None).Result;
             Console.WriteLine(JsonSerializer.Serialize(imageVariationsResult));
             Console.WriteLine("------------------------------------------------------");
 

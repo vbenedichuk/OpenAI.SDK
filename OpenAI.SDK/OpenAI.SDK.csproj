@@ -2,7 +2,7 @@
 
   <PropertyGroup>
     <TargetFramework>netstandard2.0</TargetFramework>
-    <Version>1.4.0</Version>
+    <Version>2.0.0</Version>
     <GeneratePackageOnBuild>True</GeneratePackageOnBuild>
     <PackageId>VB.$(AssemblyName)</PackageId>
     <Title>An integration library for OpenAi SDK</Title>
@@ -15,7 +15,7 @@
     <RepositoryUrl>https://github.com/vbenedichuk</RepositoryUrl>
     <RepositoryType>https://github.com/vbenedichuk/OpenAI.SDK</RepositoryType>
     <PackageTags>openai sdk</PackageTags>
-    <PackageReleaseNotes>1.4.0: Fixed file content download, moderation results, fine-tune file deserialization, DI registrations, logprobs mapping, base URL normalization, and streaming validation.</PackageReleaseNotes>
+    <PackageReleaseNotes>2.0.0: Added CancellationToken support to all API methods. The overloads without a CancellationToken are marked obsolete.</PackageReleaseNotes>
     <PackageLicenseFile>README.md</PackageLicenseFile>
     <PackageRequireLicenseAcceptance>True</PackageRequireLicenseAcceptance>
     <IncludeSymbols>True</IncludeSymbols>

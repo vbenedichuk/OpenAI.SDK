@@ -3,8 +3,10 @@ using OpenAI.SDK.Abstractions;
 using OpenAI.SDK.Configuration;
 using OpenAI.SDK.Models;
 using OpenAI.SDK.Models.Engines;
+using System;
 using System.Collections.Generic;
 using System.Net.Http;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace OpenAI.SDK.Logic
@@ -15,15 +17,27 @@ namespace OpenAI.SDK.Logic
         {
         }
 
-        public async Task<List<EngineInfo>> ListEnginesAsync()
+        [Obsolete("Use the overload that accepts a CancellationToken.")]
+        public Task<List<EngineInfo>> ListEnginesAsync()
         {
-            var result = await ExecuteRequest<ListResponse<EngineInfo>>(HttpMethod.Get, "engines");
+            return ListEnginesAsync(CancellationToken.None);
+        }
+
+        public async Task<List<EngineInfo>> ListEnginesAsync(CancellationToken cancellationToken = default)
+        {
+            var result = await ExecuteRequest<ListResponse<EngineInfo>>(HttpMethod.Get, "engines", cancellationToken);
             return result.Data;
         }
 
-        public async Task<EngineInfo> RetrieveEngine(string engineId)
+        [Obsolete("Use the overload that accepts a CancellationToken.")]
+        public Task<EngineInfo> RetrieveEngine(string engineId)
         {
-            var result = await ExecuteRequest<EngineInfo>(HttpMethod.Get, $"engines/{engineId}");
+            return RetrieveEngine(engineId, CancellationToken.None);
+        }
+
+        public async Task<EngineInfo> RetrieveEngine(string engineId, CancellationToken cancellationToken = default)
+        {
+            var result = await ExecuteRequest<EngineInfo>(HttpMethod.Get, $"engines/{engineId}", cancellationToken);
             return result;
         }
     }

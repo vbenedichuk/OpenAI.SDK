@@ -1,5 +1,7 @@
 ﻿using OpenAI.SDK.Models;
+using System;
 using System.Collections.Generic;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace OpenAI.SDK.Abstractions
@@ -15,13 +17,33 @@ namespace OpenAI.SDK.Abstractions
         /// </summary>
         /// <param name="modelId"></param>
         /// <returns></returns>
+        [Obsolete("Use the overload that accepts a CancellationToken.")]
         Task<List<ApiModel>> GetModelsAsync();
+
+        /// <summary>
+        /// implements GET https://api.openai.com/v1/models
+        /// Lists the currently available models, and provides basic information about each one such as the owner and availability.
+        /// </summary>
+        /// <param name="cancellationToken">A token to cancel the request.</param>
+        /// <returns></returns>
+        Task<List<ApiModel>> GetModelsAsync(CancellationToken cancellationToken = default);
+
         /// <summary>
         /// GET https://api.openai.com/v1/models/{modelId}
         /// Retrieves a model instance, providing basic information about the model such as the owner and permissioning.
         /// </summary>
         /// <param name="modelId">The ID of the model to use for this request</param>
         /// <returns></returns>
+        [Obsolete("Use the overload that accepts a CancellationToken.")]
         Task<ApiModel> RetrieveModelAsync(string modelId);
+
+        /// <summary>
+        /// GET https://api.openai.com/v1/models/{modelId}
+        /// Retrieves a model instance, providing basic information about the model such as the owner and permissioning.
+        /// </summary>
+        /// <param name="modelId">The ID of the model to use for this request</param>
+        /// <param name="cancellationToken">A token to cancel the request.</param>
+        /// <returns></returns>
+        Task<ApiModel> RetrieveModelAsync(string modelId, CancellationToken cancellationToken = default);
     }
 }

@@ -16,7 +16,7 @@ Following APIs are supported:
 1. [Text Completion.](https://platform.openai.com/docs/api-reference/completions). Implemented as ICompletionsApi
 2. [Chat](https://platform.openai.com/docs/api-reference/chat). Implemented as IChatApi.
 3. [Edits](https://platform.openai.com/docs/api-reference/edits). Implemented as IEditsApi.
-4. [Images](https://platform.openai.com/docs/api-reference/images). Implemented as IImagesAPi.
+4. [Images](https://platform.openai.com/docs/api-reference/images). Implemented as IImagesApi.
 5. [Embeddings](https://platform.openai.com/docs/api-reference/embeddings). Implemented as IEmbeddingsApi.
 6. [Files](https://platform.openai.com/docs/api-reference/files). Implemented as IFilesApi.
 7. [Fine-tunes](https://platform.openai.com/docs/api-reference/fine-tunes). Implemented as IFineTunesApi.
@@ -51,10 +51,38 @@ Feel free to ask questions in [issues section](https://github.com/vbenedichuk/Op
 
 6. Use it.
 
+All API methods accept a `CancellationToken`, so a request can be cancelled when the caller goes away (client disconnect, request timeout, application shutdown):
 
-#Versions history
-- 1.0. First release.
-- 1.1. Chat api support added
-- 1.2. Code cleanup and renamings.
-- 1.3. Embeddings api call fixed.
+```csharp
+using OpenAI.SDK.Abstractions;
+using OpenAI.SDK.Models.Chat;
+
+public sealed class ChatService
+{
+    private readonly IChatApi _chatApi;
+
+    public ChatService(IChatApi chatApi) => _chatApi = chatApi;
+
+    public Task<ApiChatCompletionResponse> CompleteAsync(string message, CancellationToken cancellationToken)
+    {
+        return _chatApi.CreateCompletionAsync(new ApiChatCompletionRequest
+        {
+            Model = "gpt-3.5-turbo",
+            Messages = new List<ChatMessage>
+            {
+                new ChatMessage { Role = "user", Content = message }
+            }
+        }, cancellationToken);
+    }
+}
+```
+
+> **Deprecated:** overloads that do not accept a `CancellationToken` are marked `[Obsolete]` since 2.0.0 and will be removed in a future major version. Use the overload that accepts a token — pass `CancellationToken.None` if you do not need cancellation.
+
+## Versions history
+- 2.0.0. `CancellationToken` support added to all API methods; overloads without a token are marked obsolete.
 - 1.4.0. Fixed file content download, moderation results, fine-tune file deserialization, DI registrations, logprobs mapping, base URL normalization, and streaming validation.
+- 1.3. Embeddings api call fixed.
+- 1.2. Code cleanup and renamings.
+- 1.1. Chat api support added
+- 1.0. First release.

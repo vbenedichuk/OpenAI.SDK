@@ -2,8 +2,10 @@
 using OpenAI.SDK.Abstractions;
 using OpenAI.SDK.Configuration;
 using OpenAI.SDK.Models.Moderations;
+using System;
 using System.Collections.Generic;
 using System.Net.Http;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace OpenAI.SDK.Logic
@@ -14,15 +16,27 @@ namespace OpenAI.SDK.Logic
         {
         }
 
+        [Obsolete("Use the overload that accepts a CancellationToken.")]
         public Task<ModerationResponse> CreateModeration(string input, string model = null)
         {
-            return CreateModeration(new string[] { input }, model);
+            return CreateModeration(input, model, CancellationToken.None);
         }
 
-        public async Task<ModerationResponse> CreateModeration(string[] input, string model = null)
+        public Task<ModerationResponse> CreateModeration(string input, string model = null, CancellationToken cancellationToken = default)
         {
-            var result = await ExecuteRequest<ModerationRequest, ModerationResponse>(HttpMethod.Post, "moderations", 
-                new ModerationRequest { Input = new List<string>(input), Model = model });
+            return CreateModeration(new string[] { input }, model, cancellationToken);
+        }
+
+        [Obsolete("Use the overload that accepts a CancellationToken.")]
+        public Task<ModerationResponse> CreateModeration(string[] input, string model = null)
+        {
+            return CreateModeration(input, model, CancellationToken.None);
+        }
+
+        public async Task<ModerationResponse> CreateModeration(string[] input, string model = null, CancellationToken cancellationToken = default)
+        {
+            var result = await ExecuteRequest<ModerationRequest, ModerationResponse>(HttpMethod.Post, "moderations",
+                new ModerationRequest { Input = new List<string>(input), Model = model }, cancellationToken);
             return result;
         }
     }

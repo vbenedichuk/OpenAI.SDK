@@ -2,7 +2,9 @@
 using OpenAI.SDK.Abstractions;
 using OpenAI.SDK.Configuration;
 using OpenAI.SDK.Models.Embeddings;
+using System;
 using System.Net.Http;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace OpenAI.SDK.Logic
@@ -13,9 +15,16 @@ namespace OpenAI.SDK.Logic
             IOptions<OpenAiOptions> options) : base(clientFactory, options)
         {
         }
-        public async Task<EmbeddingsResponse> CreateEmbeddings(EmbeddingsRequest request)
+
+        [Obsolete("Use the overload that accepts a CancellationToken.")]
+        public Task<EmbeddingsResponse> CreateEmbeddings(EmbeddingsRequest request)
         {
-            var result = await ExecuteRequest<EmbeddingsRequest, EmbeddingsResponse>(HttpMethod.Post, "embeddings", request);
+            return CreateEmbeddings(request, CancellationToken.None);
+        }
+
+        public async Task<EmbeddingsResponse> CreateEmbeddings(EmbeddingsRequest request, CancellationToken cancellationToken = default)
+        {
+            var result = await ExecuteRequest<EmbeddingsRequest, EmbeddingsResponse>(HttpMethod.Post, "embeddings", request, cancellationToken);
             return result;
         }
     }

@@ -7,8 +7,8 @@ using System;
 using System.IO;
 using System.Net.Http;
 using System.Net.Http.Headers;
-using System.Runtime.InteropServices.ComTypes;
 using System.Text.Json;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace OpenAI.SDK.Logic
@@ -20,14 +20,28 @@ namespace OpenAI.SDK.Logic
         {
         }
 
-        public async Task<CreateImageResponse> CreateImageAsync(CreateImageRequest request)
+        [Obsolete("Use the overload that accepts a CancellationToken.")]
+        public Task<CreateImageResponse> CreateImageAsync(CreateImageRequest request)
         {
-            var response = await ExecuteRequest<CreateImageRequest,CreateImageResponse>(HttpMethod.Post, "images/generations", request);
-            return response;          
+            return CreateImageAsync(request, CancellationToken.None);
+        }
+
+        public async Task<CreateImageResponse> CreateImageAsync(CreateImageRequest request, CancellationToken cancellationToken = default)
+        {
+            var response = await ExecuteRequest<CreateImageRequest, CreateImageResponse>(HttpMethod.Post, "images/generations", request, cancellationToken);
+            return response;
+        }
+
+        [Obsolete("Use the overload that accepts a CancellationToken.")]
+        public Task<CreateImageResponse> CreateImageEditAsync(Stream image, string imageFileName, string prompt, Stream mask = null,
+            string maskFileName = null, int? n = null, string size = null, string responseFormat = null, string user = null)
+        {
+            return CreateImageEditAsync(image, imageFileName, prompt, mask, maskFileName, n, size, responseFormat, user, CancellationToken.None);
         }
 
         public async Task<CreateImageResponse> CreateImageEditAsync(Stream image, string imageFileName, string prompt, Stream mask = null,
-            string maskFileName = null, int? n = null, string size = null, string responseFormat = null, string user = null)
+            string maskFileName = null, int? n = null, string size = null, string responseFormat = null, string user = null,
+            CancellationToken cancellationToken = default)
         {
             var url = new Uri(_baseUri, "images/edits");
             var request = new HttpRequestMessage(HttpMethod.Post, url);
@@ -35,12 +49,13 @@ namespace OpenAI.SDK.Logic
             var content = PrepareRequestContent(image, imageFileName, prompt, mask, maskFileName, n, size, responseFormat, user);
             request.Content = content;
             var client = _clientFactory.CreateClient();
-            var response = await client.SendAsync(request);
+            var response = await client.SendAsync(request, cancellationToken);
             if (response.IsSuccessStatusCode)
             {
-                var contentString = await response.Content.ReadAsStringAsync();
-                var result = JsonSerializer.Deserialize<CreateImageResponse>(contentString);
-                return result;
+                using (var stream = await response.Content.ReadAsStreamAsync())
+                {
+                    return await JsonSerializer.DeserializeAsync<CreateImageResponse>(stream, cancellationToken: cancellationToken);
+                }
             }
             else
             {
@@ -48,8 +63,15 @@ namespace OpenAI.SDK.Logic
             }
         }
 
-        public async Task<CreateImageResponse> CreateImageVariation(Stream image, string imageFileName, int? n = null, string size = null, 
+        [Obsolete("Use the overload that accepts a CancellationToken.")]
+        public Task<CreateImageResponse> CreateImageVariation(Stream image, string imageFileName, int? n = null, string size = null,
             string responseFormat = null, string user = null)
+        {
+            return CreateImageVariation(image, imageFileName, n, size, responseFormat, user, CancellationToken.None);
+        }
+
+        public async Task<CreateImageResponse> CreateImageVariation(Stream image, string imageFileName, int? n = null, string size = null,
+            string responseFormat = null, string user = null, CancellationToken cancellationToken = default)
         {
             var url = new Uri(_baseUri, "images/variations");
             var request = new HttpRequestMessage(HttpMethod.Post, url);
@@ -57,12 +79,13 @@ namespace OpenAI.SDK.Logic
             var content = PrepareRequestContent(image, imageFileName, null, null, null, n, size, responseFormat, user);
             request.Content = content;
             var client = _clientFactory.CreateClient();
-            var response = await client.SendAsync(request);
+            var response = await client.SendAsync(request, cancellationToken);
             if (response.IsSuccessStatusCode)
             {
-                var contentString = await response.Content.ReadAsStringAsync();
-                var result = JsonSerializer.Deserialize<CreateImageResponse>(contentString);
-                return result;
+                using (var stream = await response.Content.ReadAsStreamAsync())
+                {
+                    return await JsonSerializer.DeserializeAsync<CreateImageResponse>(stream, cancellationToken: cancellationToken);
+                }
             }
             else
             {
