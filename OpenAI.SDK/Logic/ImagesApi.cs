@@ -70,7 +70,7 @@ namespace OpenAI.SDK.Logic
             }
         }
 
-        private MultipartFormDataContent PrepareRequestContent(Stream image, string imageFileName, string prompt, Stream mask = null,
+        private static MultipartFormDataContent PrepareRequestContent(Stream image, string imageFileName, string prompt, Stream mask = null,
             string maskFileName = null, int? n = null, string size = null, string responseFormat = null, string user = null)
         {
             var content = new MultipartFormDataContent()

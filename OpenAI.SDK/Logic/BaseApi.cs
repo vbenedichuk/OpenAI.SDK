@@ -36,7 +36,7 @@ namespace OpenAI.SDK.Logic
             var url = new Uri(_baseUri, resource);
             var request = new HttpRequestMessage(method, url);
             request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", _options.ApiKey);
-            if (body != null)
+            if (!EqualityComparer<TSource>.Default.Equals(body, default))
             {
                 request.Content = JsonContent.Create(body, options: new JsonSerializerOptions
                 {
