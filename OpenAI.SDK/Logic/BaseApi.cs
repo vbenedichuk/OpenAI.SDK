@@ -33,6 +33,7 @@ namespace OpenAI.SDK.Logic
         protected readonly IHttpClientFactory _clientFactory;
         protected readonly OpenAiOptions _options;
         protected readonly Uri _baseUri;
+        private readonly string _apiKey;
 
         public BaseApi(IHttpClientFactory clientFactory,
             IOptions<OpenAiOptions> options)
@@ -40,22 +41,9 @@ namespace OpenAI.SDK.Logic
             _clientFactory = clientFactory ?? throw new ArgumentNullException(nameof(clientFactory));
             _options = options != null ? (options.Value ?? throw new ArgumentNullException(nameof(options))) : throw new ArgumentNullException(nameof(options));
 
-            if (string.IsNullOrWhiteSpace(_options.ApiKey))
-            {
-                throw new ArgumentException("OpenAI API key is required. Configure OpenAiOptions.ApiKey (for example via user secrets or environment configuration) before using the SDK.", nameof(options));
-            }
-
-            var baseUrl = string.IsNullOrWhiteSpace(_options.BaseUrl)
-                ? "https://api.openai.com/v1/"
-                : _options.BaseUrl;
-
-            if (!Uri.TryCreate(baseUrl, UriKind.Absolute, out var baseUri) ||
-                (baseUri.Scheme != Uri.UriSchemeHttp && baseUri.Scheme != Uri.UriSchemeHttps))
-            {
-                throw new ArgumentException("OpenAI BaseUrl must be an absolute HTTP(S) URL, for example 'https://api.openai.com/v1/'.", nameof(options));
-            }
-
-            _baseUri = new Uri(baseUri.AbsoluteUri.TrimEnd('/') + "/");
+            // Shared with startup validation so both paths reject the same configuration.
+            _baseUri = OpenAiOptionsValidator.Validate(_options);
+            _apiKey = OpenAiOptionsValidator.NormalizeApiKey(_options.ApiKey);
         }
 
         protected async Task<TResult> ExecuteRequest<TResult>(HttpMethod method, string resource, CancellationToken cancellationToken = default)
@@ -205,7 +193,7 @@ namespace OpenAI.SDK.Logic
         private HttpRequestMessage CreateRequest(HttpMethod method, Uri requestUri, HttpContent content, bool acceptJson)
         {
             var request = new HttpRequestMessage(method, requestUri);
-            request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", _options.ApiKey);
+            request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", _apiKey);
             if (acceptJson)
             {
                 request.Headers.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));

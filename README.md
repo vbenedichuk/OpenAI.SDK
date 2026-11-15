@@ -39,7 +39,7 @@ Add the following to `appsettings.json` (or use user secrets / environment varia
 }
 ```
 
-`BaseUrl` defaults to `https://api.openai.com/v1/` and `Timeout` defaults to 100 seconds when omitted. `ApiKey` is required. The section name is arbitrary — it only has to match the `Configure` call below. (The bundled sample app uses its own `OpenAI:Api` section, see [Sample application](#sample-application).)
+`BaseUrl` defaults to `https://api.openai.com/v1/` and `Timeout` defaults to 100 seconds when omitted. `ApiKey` is required; leading and trailing whitespace is trimmed. `BaseUrl` must be an absolute HTTP(S) URL without a query string or fragment. `AddOpenAiApi` registers startup validation, so a host fails at startup when the configuration is invalid. The section name is arbitrary — it only has to match the `Configure` call below. (The bundled sample app uses its own `OpenAI:Api` section, see [Sample application](#sample-application).)
 
 Register the SDK in your DI container:
 
@@ -208,7 +208,7 @@ The full changelog lives in `RELEASE_NOTES.md` in the repository (it is not pack
 
 ## Version history
 
-- **2.0.0** - `CancellationToken` support on all API methods; obsolete overloads without a token; modern chat DTOs (tools, structured output, multimodal content, typed logprobs/annotations/audio, `max_completion_tokens`); configurable timeout (honoured end-to-end) and named `HttpClient`; input validation; robust HTTP handling (streamed JSON, empty bodies, 64 KB error-body cap, URL escaping, `ConfigureAwait(false)`); dedicated `OpenAiResponseFormatException`/`OpenAiTimeoutException` with request context; richer DTOs (file status details, image usage, token details); image model/quality/output format/background for generation and editing; updated README.
+- **2.0.0** - `CancellationToken` support on all API methods; obsolete overloads without a token; modern chat DTOs (tools, structured output, multimodal content, typed logprobs/annotations/audio, `max_completion_tokens`); configurable timeout (honoured end-to-end) and named `HttpClient`; input validation and startup validation; trimmed API key; `BaseUrl` without query/fragment; robust HTTP handling (streamed JSON, empty bodies, 64 KB error-body cap, URL escaping, `ConfigureAwait(false)`); dedicated `OpenAiResponseFormatException`/`OpenAiTimeoutException` with request context; richer DTOs (file status details, image usage, token details); image model/quality/output format/background for generation and editing; updated README.
 - **1.4.0** — Fixed file content download, moderation results, fine-tune file deserialization, DI registrations, logprobs mapping, base URL normalization, and streaming validation.
 - **1.3** — Embeddings API call fixed.
 - **1.2** — Code cleanup and renamings.

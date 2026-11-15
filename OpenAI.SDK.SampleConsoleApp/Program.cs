@@ -75,7 +75,16 @@ namespace OpenAI.SDK.SampleConsoleApp
                     Prompt = "A green rabbit jumping through a burning circle.",
                     N = 1
                 }, CancellationToken.None);
-                Console.WriteLine(JsonSerializer.Serialize(imageResult));
+                Console.WriteLine($"Generated {imageResult.Data?.Count ?? 0} image(s).");
+                if (imageResult.Data != null)
+                {
+                    foreach (var image in imageResult.Data)
+                    {
+                        Console.WriteLine(!string.IsNullOrWhiteSpace(image.Url)
+                            ? image.Url
+                            : $"<base64 image: {image.B64Json?.Length ?? 0} chars>");
+                    }
+                }
                 Console.WriteLine("------------------------------------------------------");
             }
             catch (OpenAiException ex)

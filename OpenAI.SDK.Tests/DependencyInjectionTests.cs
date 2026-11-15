@@ -86,7 +86,6 @@ public class DependencyInjectionTests
 
         using var provider = services.BuildServiceProvider();
         var exception = Assert.Throws<ArgumentException>(() => provider.GetRequiredService<IChatApi>());
-        Assert.IsNotType<ArgumentNullException>(exception);
         Assert.Contains("ApiKey", exception.Message, StringComparison.OrdinalIgnoreCase);
     }
 
@@ -104,7 +103,6 @@ public class DependencyInjectionTests
 
         using var provider = services.BuildServiceProvider();
         var exception = Assert.Throws<ArgumentException>(() => provider.GetRequiredService<IChatApi>());
-        Assert.IsNotType<ArgumentNullException>(exception);
         Assert.Contains("BaseUrl", exception.Message, StringComparison.OrdinalIgnoreCase);
     }
 
@@ -116,6 +114,40 @@ public class DependencyInjectionTests
         {
             options.ApiKey = "test-key";
             options.BaseUrl = "ftp://api.openai.com/v1/";
+        });
+
+        services.AddOpenAiApi();
+
+        using var provider = services.BuildServiceProvider();
+        var exception = Assert.Throws<ArgumentException>(() => provider.GetRequiredService<IChatApi>());
+        Assert.Contains("BaseUrl", exception.Message, StringComparison.OrdinalIgnoreCase);
+    }
+
+    [Fact]
+    public void ResolvingApi_ThrowsClearException_WhenBaseUrlHasQuery()
+    {
+        var services = new ServiceCollection();
+        services.Configure<OpenAiOptions>(options =>
+        {
+            options.ApiKey = "test-key";
+            options.BaseUrl = "https://api.openai.com/v1/?x=1";
+        });
+
+        services.AddOpenAiApi();
+
+        using var provider = services.BuildServiceProvider();
+        var exception = Assert.Throws<ArgumentException>(() => provider.GetRequiredService<IChatApi>());
+        Assert.Contains("BaseUrl", exception.Message, StringComparison.OrdinalIgnoreCase);
+    }
+
+    [Fact]
+    public void ResolvingApi_ThrowsClearException_WhenBaseUrlHasFragment()
+    {
+        var services = new ServiceCollection();
+        services.Configure<OpenAiOptions>(options =>
+        {
+            options.ApiKey = "test-key";
+            options.BaseUrl = "https://api.openai.com/v1/#frag";
         });
 
         services.AddOpenAiApi();

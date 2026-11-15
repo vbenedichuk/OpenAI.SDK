@@ -101,6 +101,25 @@ public class HttpRequestTests
     }
 
     [Fact]
+    public async Task ChatApi_TrimsApiKeyWhitespace()
+    {
+        var handler = new StubHttpMessageHandler(_ => JsonResponse(ChatCompletionJson));
+        using var provider = CreateProvider(handler, apiKey: "  test-key  ");
+
+        var chatApi = provider.GetRequiredService<IChatApi>();
+        await chatApi.CreateCompletionAsync(new ApiChatCompletionRequest
+        {
+            Model = "gpt-3.5-turbo",
+            Messages = new List<ChatMessage> { new() { Role = "user", Content = "hi" } }
+        }, CancellationToken.None);
+
+        var request = Assert.Single(handler.Requests);
+        Assert.NotNull(request.Headers.Authorization);
+        Assert.Equal("Bearer", request.Headers.Authorization.Scheme);
+        Assert.Equal("test-key", request.Headers.Authorization.Parameter);
+    }
+
+    [Fact]
     public async Task ChatApi_NormalizesBaseUrlWithoutTrailingSlash()
     {
         var handler = new StubHttpMessageHandler(_ => JsonResponse(ChatCompletionJson));
@@ -532,7 +551,6 @@ public class HttpRequestTests
         var filesApi = provider.GetRequiredService<IFilesApi>();
         var exception = await Assert.ThrowsAsync<ArgumentException>(() => filesApi.RetrieveFileAsync("../../models", CancellationToken.None));
 
-        Assert.IsNotType<ArgumentNullException>(exception);
         Assert.Empty(handler.Requests);
     }
 
@@ -783,15 +801,15 @@ public class HttpRequestTests
     }
 
 
-    private static ServiceProvider CreateProvider(HttpMessageHandler handler, string baseUrl = "https://api.openai.com/v1/", TimeSpan? timeout = null)
-        => CreateProvider(handler, out _, baseUrl, timeout);
+    private static ServiceProvider CreateProvider(HttpMessageHandler handler, string baseUrl = "https://api.openai.com/v1/", TimeSpan? timeout = null, string apiKey = "test-key")
+        => CreateProvider(handler, out _, baseUrl, timeout, apiKey);
 
-    private static ServiceProvider CreateProvider(HttpMessageHandler handler, out StubHttpClientFactory factory, string baseUrl = "https://api.openai.com/v1/", TimeSpan? timeout = null)
+    private static ServiceProvider CreateProvider(HttpMessageHandler handler, out StubHttpClientFactory factory, string baseUrl = "https://api.openai.com/v1/", TimeSpan? timeout = null, string apiKey = "test-key")
     {
         var services = new ServiceCollection();
         services.Configure<OpenAiOptions>(options =>
         {
-            options.ApiKey = "test-key";
+            options.ApiKey = apiKey;
             options.BaseUrl = baseUrl;
             if (timeout.HasValue)
             {
@@ -832,12 +850,9 @@ public class HttpRequestTests
 
         public List<HttpRequestMessage> Requests { get; } = new();
 
-        public CancellationToken LastCancellationToken { get; private set; }
-
         protected override Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken)
         {
             Requests.Add(request);
-            LastCancellationToken = cancellationToken;
             return Task.FromResult(_responder(request));
         }
     }

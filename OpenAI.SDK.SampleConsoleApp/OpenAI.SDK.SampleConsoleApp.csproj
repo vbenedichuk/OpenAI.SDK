@@ -19,10 +19,4 @@
     <ProjectReference Include="..\OpenAI.SDK\OpenAI.SDK.csproj" />
   </ItemGroup>
 
-  <ItemGroup>
-    <None Update="BlackCircle.png">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </None>
-  </ItemGroup>
-
 </Project>

@@ -19,6 +19,7 @@
 ### Added
 
 - `OpenAiOptions.Timeout` (default 100s, covers the whole request).
+- `AddOpenAiApi` registers an `IStartupValidator`, so a host fails at startup when `OpenAiOptions` is invalid.
 - `ConfigurationExtensions.HttpClientName` (`"OpenAI"`) constant.
 - Chat DTOs: `ChatTool`, `ChatToolFunction`, `ChatToolCall`, `ChatToolCallFunction`, `ChatFunctionCall`, `ChatResponseFormat`.
 - `ApiChatCompletionRequest`: `MaxCompletionTokens`, `ResponseFormat`, `Seed`, `Tools`, `ToolChoice`, `Functions`, `FunctionCall`, `Logprobs`, `TopLogprobs`.
@@ -41,6 +42,8 @@
 ### Changed
 
 - `OpenAiOptions.BaseUrl` defaults to `https://api.openai.com/v1/`.
+- `OpenAiOptions.ApiKey` is trimmed before it is sent; a blank key still fails validation.
+- `OpenAiOptions.BaseUrl` with a query string or fragment is rejected instead of being silently ignored.
 - `OpenAiOptions.Timeout` takes precedence over `HttpClient.Timeout`: the named client is created with `Timeout.InfiniteTimeSpan`, so a 100 s default no longer truncates longer configured timeouts.
 - `OpenAiApiException` message now includes status code, request URI and a truncated (1024 characters) response body; `ResponseContents` is capped at 64 KB.
 - `ChatMessage.Content` changed from `string` to `object`.
@@ -67,6 +70,8 @@
 - Large non-2xx bodies are read only up to 64 KB instead of being fully buffered.
 - `CreateImageEditAsync` no longer throws `ArgumentNullException` when a mask is supplied without `maskFileName`; the file name defaults to `mask.png`.
 - The sample project is no longer packable, so `dotnet pack OpenAI.sln` does not produce a stray `OpenAI.SDK.SampleConsoleApp` package.
+- Configuration validation is shared between runtime and startup (`OpenAiOptionsValidator`), so a host fails fast on a missing key or an unusable `BaseUrl`.
+- The sample summarizes generated images (URL or base64 length) instead of dumping `b64_json`; the unused `BlackCircle.png` asset and its copy directive were removed.
 - The sample now reports `OpenAiTimeoutException`/`OpenAiResponseFormatException` through `OpenAiException` (instead of letting them escape) and falls back to `OPENAI_API_KEY` when the user-secrets value is whitespace.
 - `FineTunesApi.ListFineTuneEventsAsync` no longer silently ignores `stream`.
 - `ModerationsApi` rejects null/empty input and the ambiguous `CreateModeration(null)` overload.
@@ -90,8 +95,8 @@
 
 ### Tests
 
-- 81 tests, all passing.
-- New coverage: configuration validation (missing key, invalid/non-HTTP base URL), default base URL, image model serialization and `model`/`quality`/`output_format`/`background` propagation in multipart edits, mask filename defaulting, `BaseApi` error path with the 64 KB body cap, request shape (method, auth, content type, null omission), empty bodies with and without `Content-Length`, malformed JSON wrapping for JSON and multipart requests, `RequestUri`/`RetryAfter`/body truncation, URL escaping and path-traversal rejection, timeout enforcement during header wait and body read (including request context and oversized timeouts), cancellation propagation (deterministic, no sleeps), `ChatMessage.Content` string/multi-part round-trip, typed deserialization of file status details, image usage, logprobs, annotations, audio, refusal, token details and model/image metadata, request-shape/validation coverage for embeddings, moderations, models, file listing/deletion and image generation, and the sample's exception report for API, format and timeout failures.
+- 87 tests, all passing.
+- New coverage: configuration validation (missing key, invalid/non-HTTP/query/fragment base URL, startup validator, API key trimming), default base URL, image model serialization and `model`/`quality`/`output_format`/`background` propagation in multipart edits, mask filename defaulting, `BaseApi` error path with the 64 KB body cap, request shape (method, auth, content type, null omission), empty bodies with and without `Content-Length`, malformed JSON wrapping for JSON and multipart requests, `RequestUri`/`RetryAfter`/body truncation, URL escaping and path-traversal rejection, timeout enforcement during header wait and body read (including request context and oversized timeouts), cancellation propagation (deterministic, no sleeps), `ChatMessage.Content` string/multi-part round-trip, typed deserialization of file status details, image usage, logprobs, annotations, audio, refusal, token details and model/image metadata, request-shape/validation coverage for embeddings, moderations, models, file listing/deletion and image generation, and the sample's exception report for API, format and timeout failures.
 
 ### Commits
 
@@ -102,3 +107,5 @@
 - `c1cab14` Update README and add release notes
 - A review-driven hardening pass: buffer the response body once, apply the timeout to the whole request, confine resources to the base URL, read plain-text chat content as `string`, and close the related test gaps.
 - A second review pass: typed file status/image usage/chat payloads, dedicated `OpenAiResponseFormatException`/`OpenAiTimeoutException`, 64 KB error-body cap, timeout request context, infinite-timeout named client, mask filename default, and regression tests for each fix.
+- `0f786b2` Type remaining response payloads, add timeout context and regression tests, document breaking changes
+- `5bf46a1` Report all SDK exceptions in the sample and add supported-API test coverage

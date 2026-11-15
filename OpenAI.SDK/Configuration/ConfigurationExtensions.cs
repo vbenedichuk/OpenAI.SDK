@@ -1,4 +1,5 @@
 ﻿using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Options;
 using OpenAI.SDK.Abstractions;
 using OpenAI.SDK.Logic;
 using System;
@@ -12,6 +13,11 @@ namespace OpenAI.SDK.Configuration
         public static IServiceCollection AddOpenAiApi(this IServiceCollection services)
         {
             services.AddHttpClient(HttpClientName, client => client.Timeout = System.Threading.Timeout.InfiniteTimeSpan);
+
+            // Hosts call IStartupValidator during startup, so invalid options fail fast
+            // instead of surfacing on the first API resolution.
+            services.AddSingleton<IStartupValidator>(
+                provider => new OpenAiOptionsStartupValidator(provider.GetRequiredService<IOptions<OpenAiOptions>>()));
 
             services.AddSingleton<IModelsApi, ModelsApi>();
 #pragma warning disable CS0612 // Retired APIs stay registered for backward compatibility.
