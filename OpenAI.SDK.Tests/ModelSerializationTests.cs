@@ -126,4 +126,50 @@ public class ModelSerializationTests
         Assert.NotNull(fineTuneEvent);
         Assert.Equal("Created fine-tune: ft-1", fineTuneEvent.Message);
     }
+
+    [Fact]
+    public void ChatMessage_SerializesStringContentAsJsonString()
+    {
+        var message = new OpenAI.SDK.Models.Chat.ChatMessage { Role = "user", Content = "hi" };
+
+        var json = JsonSerializer.Serialize(message, new JsonSerializerOptions
+        {
+            DefaultIgnoreCondition = System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull
+        });
+
+        using var document = JsonDocument.Parse(json);
+        Assert.Equal("hi", document.RootElement.GetProperty("content").GetString());
+        Assert.Equal("user", document.RootElement.GetProperty("role").GetString());
+        Assert.False(document.RootElement.TryGetProperty("name", out _));
+    }
+
+    [Fact]
+    public void ChatMessage_SerializesContentPartArrayAsJsonArray()
+    {
+        var parts = new List<object>
+        {
+            new Dictionary<string, object> { ["type"] = "text", ["text"] = "hi" }
+        };
+        var message = new OpenAI.SDK.Models.Chat.ChatMessage { Role = "user", Content = parts };
+
+        var json = JsonSerializer.Serialize(message);
+
+        using var document = JsonDocument.Parse(json);
+        var content = document.RootElement.GetProperty("content");
+        Assert.Equal(JsonValueKind.Array, content.ValueKind);
+        Assert.Equal("text", content[0].GetProperty("type").GetString());
+    }
+
+    [Fact]
+    public void ChatMessage_RoundTripsStringContentThroughRequest()
+    {
+        const string json = """{ "role": "assistant", "content": "hi" }""";
+
+        var message = JsonSerializer.Deserialize<OpenAI.SDK.Models.Chat.ChatMessage>(json);
+        var serialized = JsonSerializer.Serialize(message);
+
+        using var document = JsonDocument.Parse(serialized);
+        Assert.Equal("hi", document.RootElement.GetProperty("content").GetString());
+        Assert.False(document.RootElement.TryGetProperty("ContentText", out _));
+    }
 }

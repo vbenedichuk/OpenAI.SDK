@@ -1,14 +1,12 @@
 ﻿using Microsoft.Extensions.Options;
 using OpenAI.SDK.Abstractions;
 using OpenAI.SDK.Configuration;
-using OpenAI.SDK.Exceptions;
 using OpenAI.SDK.Models;
 using OpenAI.SDK.Models.Files;
 using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Net.Http;
-using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -99,7 +97,7 @@ namespace OpenAI.SDK.Logic
         /// <inheritdoc/>
         public Task<FileDetails> UploadFileAsync(Stream file, string fileName, string purpose, CancellationToken cancellationToken = default)
         {
-            if (file == null) throw new ArgumentException("File is required", nameof(file));
+            if (file == null) throw new ArgumentNullException(nameof(file));
             if (string.IsNullOrWhiteSpace(fileName)) throw new ArgumentException("Filename is required", nameof(fileName));
             if (string.IsNullOrWhiteSpace(purpose)) throw new ArgumentException("Purpose is required", nameof(purpose));
 

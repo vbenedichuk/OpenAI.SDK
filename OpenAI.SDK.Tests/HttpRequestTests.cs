@@ -133,11 +133,7 @@ public class HttpRequestTests
     public async Task ChatApi_ForwardsCancellationToken()
     {
         using var cts = new CancellationTokenSource();
-        var handler = new AsyncStubHandler(async (request, ct) =>
-        {
-            await Task.Delay(Timeout.Infinite, ct);
-            return JsonResponse(ChatCompletionJson);
-        });
+        var handler = new BlockingHandler();
         using var provider = CreateProvider(handler);
 
         var chatApi = provider.GetRequiredService<IChatApi>();
@@ -146,7 +142,8 @@ public class HttpRequestTests
             Model = "gpt-3.5-turbo",
             Messages = new List<ChatMessage> { new() { Role = "user", Content = "hi" } }
         }, cts.Token);
-        await Task.Delay(50);
+
+        await handler.Entered;
         cts.Cancel();
 
         await Assert.ThrowsAnyAsync<OperationCanceledException>(() => task);
@@ -172,16 +169,13 @@ public class HttpRequestTests
     public async Task ModelsApi_ForwardsCancellationToken()
     {
         using var cts = new CancellationTokenSource();
-        var handler = new AsyncStubHandler(async (request, ct) =>
-        {
-            await Task.Delay(Timeout.Infinite, ct);
-            return JsonResponse(ModelsListJson);
-        });
+        var handler = new BlockingHandler();
         using var provider = CreateProvider(handler);
 
         var modelsApi = provider.GetRequiredService<IModelsApi>();
         var task = modelsApi.GetModelsAsync(cts.Token);
-        await Task.Delay(50);
+
+        await handler.Entered;
         cts.Cancel();
 
         await Assert.ThrowsAnyAsync<OperationCanceledException>(() => task);
@@ -192,19 +186,13 @@ public class HttpRequestTests
     public async Task RetrieveFileContentAsync_ForwardsCancellationToken()
     {
         using var cts = new CancellationTokenSource();
-        var handler = new AsyncStubHandler(async (request, ct) =>
-        {
-            await Task.Delay(Timeout.Infinite, ct);
-            return new HttpResponseMessage(HttpStatusCode.OK)
-            {
-                Content = new ByteArrayContent(new byte[] { 1, 2, 3 })
-            };
-        });
+        var handler = new BlockingHandler();
         using var provider = CreateProvider(handler);
 
         var filesApi = provider.GetRequiredService<IFilesApi>();
         var task = filesApi.RetrieveFileContentAsync("file-123", cts.Token);
-        await Task.Delay(50);
+
+        await handler.Entered;
         cts.Cancel();
 
         await Assert.ThrowsAnyAsync<OperationCanceledException>(() => task);
@@ -215,17 +203,14 @@ public class HttpRequestTests
     public async Task CreateImageEditAsync_ForwardsCancellationToken()
     {
         using var cts = new CancellationTokenSource();
-        var handler = new AsyncStubHandler(async (request, ct) =>
-        {
-            await Task.Delay(Timeout.Infinite, ct);
-            return JsonResponse(ImageResponseJson);
-        });
+        var handler = new BlockingHandler();
         using var provider = CreateProvider(handler);
 
         var imagesApi = provider.GetRequiredService<IImagesApi>();
         using var image = new MemoryStream(new byte[] { 1, 2, 3 });
         var task = imagesApi.CreateImageEditAsync(image, "img.png", "a prompt", cancellationToken: cts.Token);
-        await Task.Delay(50);
+
+        await handler.Entered;
         cts.Cancel();
 
         await Assert.ThrowsAnyAsync<OperationCanceledException>(() => task);
@@ -259,11 +244,23 @@ public class HttpRequestTests
     [Fact]
     public async Task CreateImageEditAsync_IncludesModelWhenProvided()
     {
-        string? requestBody = null;
-        StubHttpMessageHandler handler = null!;
-        handler = new StubHttpMessageHandler(request =>
+        string? model = null;
+        string? prompt = null;
+        var handler = new StubHttpMessageHandler(request =>
         {
-            requestBody = request.Content!.ReadAsStringAsync().GetAwaiter().GetResult();
+            var form = Assert.IsType<MultipartFormDataContent>(request.Content);
+            foreach (var part in form)
+            {
+                var name = part.Headers.ContentDisposition?.Name?.Trim('"');
+                if (name == "model")
+                {
+                    model = part.ReadAsStringAsync().GetAwaiter().GetResult();
+                }
+                else if (name == "prompt")
+                {
+                    prompt = part.ReadAsStringAsync().GetAwaiter().GetResult();
+                }
+            }
             return JsonResponse(ImageResponseJson);
         });
         using var provider = CreateProvider(handler);
@@ -272,9 +269,8 @@ public class HttpRequestTests
         using var image = new MemoryStream(new byte[] { 1, 2, 3 });
         await imagesApi.CreateImageEditAsync(image, "img.png", "a prompt", model: "gpt-image-2", cancellationToken: CancellationToken.None);
 
-        Assert.NotNull(requestBody);
-        Assert.Contains("name=model", requestBody!);
-        Assert.Contains("gpt-image-2", requestBody!);
+        Assert.Equal("gpt-image-2", model);
+        Assert.Equal("a prompt", prompt);
     }
 
 #pragma warning disable CS0618 // The obsolete overload must keep working for backward compatibility.
@@ -323,8 +319,7 @@ public class HttpRequestTests
     public async Task ChatApi_SendsExpectedRequestShape()
     {
         string? requestBody = null;
-        StubHttpMessageHandler handler = null!;
-        handler = new StubHttpMessageHandler(request =>
+        var handler = new StubHttpMessageHandler(request =>
         {
             requestBody = request.Content!.ReadAsStringAsync().GetAwaiter().GetResult();
             return JsonResponse(ChatCompletionJson);
@@ -374,6 +369,190 @@ public class HttpRequestTests
     }
 
     [Fact]
+    public async Task ChatApi_ReturnsDefault_WhenEmptyBodyHasNoContentLength()
+    {
+        var handler = new StubHttpMessageHandler(_ => new HttpResponseMessage(HttpStatusCode.OK)
+        {
+            // No Content-Length and a non-seekable stream, like a chunked response.
+            Content = new StreamContent(new NonSeekableStream(Array.Empty<byte>()))
+        });
+        using var provider = CreateProvider(handler);
+
+        var chatApi = provider.GetRequiredService<IChatApi>();
+        var result = await chatApi.CreateCompletionAsync(new ApiChatCompletionRequest
+        {
+            Model = "gpt-3.5-turbo",
+            Messages = new List<ChatMessage> { new() { Role = "user", Content = "hi" } }
+        }, CancellationToken.None);
+
+        Assert.Null(result);
+    }
+
+    [Fact]
+    public async Task ChatApi_WrapsMalformedJsonInApiException()
+    {
+        const string malformed = "{not-json";
+        var handler = new StubHttpMessageHandler(_ => new HttpResponseMessage(HttpStatusCode.OK)
+        {
+            Content = new StreamContent(new NonSeekableStream(Encoding.UTF8.GetBytes(malformed)))
+        });
+        using var provider = CreateProvider(handler);
+
+        var chatApi = provider.GetRequiredService<IChatApi>();
+        var exception = await Assert.ThrowsAsync<OpenAiApiException>(() => chatApi.CreateCompletionAsync(new ApiChatCompletionRequest
+        {
+            Model = "gpt-3.5-turbo",
+            Messages = new List<ChatMessage> { new() { Role = "user", Content = "hi" } }
+        }, CancellationToken.None));
+
+        Assert.IsType<JsonException>(exception.InnerException);
+        Assert.Equal(malformed, exception.ResponseContents);
+        Assert.Contains("Failed to deserialize", exception.Message);
+        Assert.EndsWith("/v1/chat/completions", exception.RequestUri!.AbsoluteUri);
+    }
+
+    [Fact]
+    public async Task ChatApi_AppliesOptionsTimeoutToWholeRequest()
+    {
+        var handler = new BlockingHandler();
+        using var provider = CreateProvider(handler, timeout: TimeSpan.FromMilliseconds(100));
+        using var callerCts = new CancellationTokenSource();
+
+        var chatApi = provider.GetRequiredService<IChatApi>();
+        await Assert.ThrowsAnyAsync<OperationCanceledException>(() => chatApi.CreateCompletionAsync(new ApiChatCompletionRequest
+        {
+            Model = "gpt-3.5-turbo",
+            Messages = new List<ChatMessage> { new() { Role = "user", Content = "hi" } }
+        }, callerCts.Token));
+
+        Assert.False(callerCts.IsCancellationRequested);
+        Assert.True(handler.LastToken.IsCancellationRequested);
+    }
+
+    [Fact]
+    public async Task RetrieveFile_EscapesIdInRequestUrl()
+    {
+        var handler = new StubHttpMessageHandler(_ => JsonResponse("{\"id\":\"x\"}"));
+        using var provider = CreateProvider(handler);
+
+        var filesApi = provider.GetRequiredService<IFilesApi>();
+        await filesApi.RetrieveFileAsync("a b#c", CancellationToken.None);
+
+        var request = Assert.Single(handler.Requests);
+        Assert.Equal("https://api.openai.com/v1/files/a%20b%23c", request.RequestUri!.AbsoluteUri);
+    }
+
+    [Fact]
+    public async Task RetrieveFile_RejectsPathTraversal()
+    {
+        var handler = new StubHttpMessageHandler(_ => JsonResponse("{\"id\":\"x\"}"));
+        using var provider = CreateProvider(handler);
+
+        var filesApi = provider.GetRequiredService<IFilesApi>();
+        var exception = await Assert.ThrowsAsync<ArgumentException>(() => filesApi.RetrieveFileAsync("../../models", CancellationToken.None));
+
+        Assert.IsNotType<ArgumentNullException>(exception);
+        Assert.Empty(handler.Requests);
+    }
+
+    [Fact]
+    public async Task OpenAiApiException_ExposesRequestUriAndRetryAfter()
+    {
+        var handler = new StubHttpMessageHandler(_ =>
+        {
+            var response = new HttpResponseMessage((HttpStatusCode)429)
+            {
+                ReasonPhrase = "Too Many Requests",
+                Content = new StringContent("{\"error\":{\"message\":\"slow down\"}}", Encoding.UTF8, "application/json")
+            };
+            response.Headers.RetryAfter = new System.Net.Http.Headers.RetryConditionHeaderValue(TimeSpan.FromSeconds(7));
+            return response;
+        });
+        using var provider = CreateProvider(handler);
+
+        var chatApi = provider.GetRequiredService<IChatApi>();
+        var exception = await Assert.ThrowsAsync<OpenAiApiException>(() => chatApi.CreateCompletionAsync(new ApiChatCompletionRequest
+        {
+            Model = "gpt-3.5-turbo",
+            Messages = new List<ChatMessage> { new() { Role = "user", Content = "hi" } }
+        }, CancellationToken.None));
+
+        Assert.Equal(TimeSpan.FromSeconds(7), exception.RetryAfter);
+        Assert.Equal("https://api.openai.com/v1/chat/completions", exception.RequestUri!.AbsoluteUri);
+        Assert.NotNull(exception.ResponseHeaders);
+        Assert.Contains("slow down", exception.Message);
+        Assert.DoesNotContain("Too Many Requests", exception.Message);
+        Assert.Contains("429", exception.Message);
+    }
+
+    [Fact]
+    public async Task OpenAiApiException_TruncatesLongBodyButKeepsResponseContents()
+    {
+        var body = new string('x', 2000);
+        var handler = new StubHttpMessageHandler(_ => new HttpResponseMessage(HttpStatusCode.BadRequest)
+        {
+            Content = new StringContent(body, Encoding.UTF8, "application/json")
+        });
+        using var provider = CreateProvider(handler);
+
+        var chatApi = provider.GetRequiredService<IChatApi>();
+        var exception = await Assert.ThrowsAsync<OpenAiApiException>(() => chatApi.CreateCompletionAsync(new ApiChatCompletionRequest
+        {
+            Model = "gpt-3.5-turbo",
+            Messages = new List<ChatMessage> { new() { Role = "user", Content = "hi" } }
+        }, CancellationToken.None));
+
+        Assert.Equal(body, exception.ResponseContents);
+        Assert.Contains("(truncated)", exception.Message);
+        Assert.True(exception.Message.Length < body.Length);
+    }
+
+    [Fact]
+    public async Task ChatApi_ReturnsStringContentFromResponse()
+    {
+        var handler = new StubHttpMessageHandler(_ => JsonResponse(ChatCompletionJson));
+        using var provider = CreateProvider(handler);
+
+        var chatApi = provider.GetRequiredService<IChatApi>();
+        var result = await chatApi.CreateCompletionAsync(new ApiChatCompletionRequest
+        {
+            Model = "gpt-3.5-turbo",
+            Messages = new List<ChatMessage> { new() { Role = "user", Content = "hi" } }
+        }, CancellationToken.None);
+
+        var message = Assert.Single(result!.Choices).Message;
+        Assert.IsType<string>(message.Content);
+        Assert.Equal("hi", message.Content as string);
+        Assert.Equal("hi", message.ContentText);
+    }
+
+    [Fact]
+    public async Task ChatApi_ReturnsMultiPartContentAsJsonElement()
+    {
+        const string multiPartJson = """
+            {
+              "id": "chatcmpl-1",
+              "object": "chat.completion",
+              "created": 1,
+              "choices": [ { "index": 0, "message": { "role": "assistant", "content": [ { "type": "text", "text": "hi" } ] }, "finish_reason": "stop" } ]
+            }
+            """;
+        var handler = new StubHttpMessageHandler(_ => JsonResponse(multiPartJson));
+        using var provider = CreateProvider(handler);
+
+        var chatApi = provider.GetRequiredService<IChatApi>();
+        var result = await chatApi.CreateCompletionAsync(new ApiChatCompletionRequest
+        {
+            Model = "gpt-3.5-turbo",
+            Messages = new List<ChatMessage> { new() { Role = "user", Content = "hi" } }
+        }, CancellationToken.None);
+
+        var content = Assert.Single(result!.Choices).Message.Content;
+        var element = Assert.IsType<JsonElement>(content);
+        Assert.Equal(JsonValueKind.Array, element.ValueKind);
+    }
+
+    [Fact]
     public async Task ChatApi_ThrowsArgumentNullException_WhenRequestIsNull()
     {
         using var provider = CreateProvider(new StubHttpMessageHandler(_ => JsonResponse(ChatCompletionJson)));
@@ -382,29 +561,81 @@ public class HttpRequestTests
         await Assert.ThrowsAsync<ArgumentNullException>(() => chatApi.CreateCompletionAsync(null, CancellationToken.None));
     }
 
-    private sealed class AsyncStubHandler : HttpMessageHandler
+    private sealed class BlockingHandler : HttpMessageHandler
     {
-        private readonly Func<HttpRequestMessage, CancellationToken, Task<HttpResponseMessage>> _responder;
-        public CancellationToken LastToken;
-        public AsyncStubHandler(Func<HttpRequestMessage, CancellationToken, Task<HttpResponseMessage>> responder) => _responder = responder;
-        protected override Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken)
+        private readonly TaskCompletionSource<bool> _entered = new(TaskCreationOptions.RunContinuationsAsynchronously);
+
+        public Task Entered => _entered.Task;
+
+        public CancellationToken LastToken { get; private set; }
+
+        protected override async Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken)
         {
             LastToken = cancellationToken;
-            return _responder(request, cancellationToken);
+            _entered.TrySetResult(true);
+            await Task.Delay(Timeout.Infinite, cancellationToken);
+            return new HttpResponseMessage(HttpStatusCode.OK);
         }
     }
 
+    private sealed class NonSeekableStream : Stream
+    {
+        private readonly byte[] _buffer;
+        private int _position;
+
+        public NonSeekableStream(byte[] buffer) => _buffer = buffer;
+
+        public override bool CanRead => true;
+
+        public override bool CanSeek => false;
+
+        public override bool CanWrite => false;
+
+        public override long Length => throw new NotSupportedException();
+
+        public override long Position
+        {
+            get => throw new NotSupportedException();
+            set => throw new NotSupportedException();
+        }
+
+        public override int Read(byte[] buffer, int offset, int count)
+        {
+            var remaining = _buffer.Length - _position;
+            if (remaining <= 0)
+            {
+                return 0;
+            }
+
+            var length = Math.Min(remaining, count);
+            Array.Copy(_buffer, _position, buffer, offset, length);
+            _position += length;
+            return length;
+        }
+
+        public override void Flush()
+        {
+        }
+
+        public override long Seek(long offset, SeekOrigin origin) => throw new NotSupportedException();
+
+        public override void SetLength(long value) => throw new NotSupportedException();
+
+        public override void Write(byte[] buffer, int offset, int count) => throw new NotSupportedException();
+    }
 
 
-
-
-    private static ServiceProvider CreateProvider(HttpMessageHandler handler, string baseUrl = "https://api.openai.com/v1/")
+    private static ServiceProvider CreateProvider(HttpMessageHandler handler, string baseUrl = "https://api.openai.com/v1/", TimeSpan? timeout = null)
     {
         var services = new ServiceCollection();
         services.Configure<OpenAiOptions>(options =>
         {
             options.ApiKey = "test-key";
             options.BaseUrl = baseUrl;
+            if (timeout.HasValue)
+            {
+                options.Timeout = timeout.Value;
+            }
         });
         services.AddSingleton<IHttpClientFactory>(new StubHttpClientFactory(handler));
         services.AddOpenAiApi();

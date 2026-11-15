@@ -15,7 +15,7 @@
     <RepositoryUrl>https://github.com/vbenedichuk</RepositoryUrl>
     <RepositoryType>https://github.com/vbenedichuk/OpenAI.SDK</RepositoryType>
     <PackageTags>openai sdk</PackageTags>
-    <PackageReleaseNotes>2.0.0: Added CancellationToken support to all API methods. The overloads without a CancellationToken are marked obsolete.</PackageReleaseNotes>
+    <PackageReleaseNotes>2.0.0: CancellationToken support on every API; obsolete overloads without a token. Modern Chat DTOs (tools, structured output, multimodal content, max_completion_tokens). Configurable Timeout and named HttpClient. Input validation with clear exceptions. Robust HTTP handling: empty/204 bodies, URL escaping, JSON failures wrapped in OpenAiApiException, ConfigureAwait(false). OpenAiApiException exposes RequestUri, ResponseHeaders and RetryAfter. Image model selection for generation and editing. Breaking: CreateImageEditAsync gained a model parameter, ChatMessage.Content and ApiChatCompletionRequest.Stop accept objects.</PackageReleaseNotes>
     <PackageLicenseFile>LICENSE</PackageLicenseFile>
     <PackageRequireLicenseAcceptance>True</PackageRequireLicenseAcceptance>
     <IncludeSymbols>True</IncludeSymbols>

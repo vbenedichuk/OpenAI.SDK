@@ -1,6 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
 using System.Net;
 using System.Net.Http;
 using System.Net.Http.Headers;
@@ -90,7 +88,7 @@ namespace OpenAI.SDK.Exceptions
                 builder.Append(" for ");
                 builder.Append(requestUri.AbsoluteUri);
             }
-            if (!string.IsNullOrWhiteSpace(message))
+            if (!string.IsNullOrWhiteSpace(message) && !IsRedundantReasonPhrase(message, statusCode))
             {
                 builder.Append(": ");
                 builder.Append(message);
@@ -101,6 +99,16 @@ namespace OpenAI.SDK.Exceptions
                 builder.Append(Truncate(responseContents, MaxBodyLength));
             }
             return builder.ToString();
+        }
+
+        private static bool IsRedundantReasonPhrase(string message, HttpStatusCode statusCode)
+        {
+            // The status line already contains the code and its name ("401 Unauthorized"),
+            // so an identical reason phrase must not be repeated in the message.
+            return string.Equals(
+                message.Replace(" ", string.Empty).Trim(),
+                statusCode.ToString(),
+                StringComparison.OrdinalIgnoreCase);
         }
 
         private static string Truncate(string value, int maxLength)

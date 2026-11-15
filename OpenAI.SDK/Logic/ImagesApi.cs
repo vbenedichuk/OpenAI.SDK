@@ -1,12 +1,11 @@
 ﻿using Microsoft.Extensions.Options;
 using OpenAI.SDK.Abstractions;
 using OpenAI.SDK.Configuration;
-using OpenAI.SDK.Exceptions;
 using OpenAI.SDK.Models.CreateImage;
 using System;
+using System.Globalization;
 using System.IO;
 using System.Net.Http;
-using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -101,7 +100,7 @@ namespace OpenAI.SDK.Logic
             }
             if (n != null)
             {
-                content.Add(new StringContent(n.Value.ToString()), "n");
+                content.Add(new StringContent(n.Value.ToString(CultureInfo.InvariantCulture)), "n");
             }
             if (!string.IsNullOrWhiteSpace(size))
             {

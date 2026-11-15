@@ -70,7 +70,7 @@ public class DependencyInjectionTests
     }
 
     [Fact]
-    public void AddOpenAiApi_ThrowsClearException_WhenApiKeyMissing()
+    public void ResolvingApi_ThrowsClearException_WhenApiKeyMissing()
     {
         var services = new ServiceCollection();
         services.Configure<OpenAiOptions>(options =>
@@ -82,17 +82,36 @@ public class DependencyInjectionTests
 
         using var provider = services.BuildServiceProvider();
         var exception = Assert.Throws<ArgumentException>(() => provider.GetRequiredService<IChatApi>());
+        Assert.IsNotType<ArgumentNullException>(exception);
         Assert.Contains("ApiKey", exception.Message, StringComparison.OrdinalIgnoreCase);
     }
 
     [Fact]
-    public void AddOpenAiApi_ThrowsClearException_WhenBaseUrlInvalid()
+    public void ResolvingApi_ThrowsClearException_WhenBaseUrlInvalid()
     {
         var services = new ServiceCollection();
         services.Configure<OpenAiOptions>(options =>
         {
             options.ApiKey = "test-key";
             options.BaseUrl = "not-a-url";
+        });
+
+        services.AddOpenAiApi();
+
+        using var provider = services.BuildServiceProvider();
+        var exception = Assert.Throws<ArgumentException>(() => provider.GetRequiredService<IChatApi>());
+        Assert.IsNotType<ArgumentNullException>(exception);
+        Assert.Contains("BaseUrl", exception.Message, StringComparison.OrdinalIgnoreCase);
+    }
+
+    [Fact]
+    public void ResolvingApi_ThrowsClearException_WhenBaseUrlIsNotHttp()
+    {
+        var services = new ServiceCollection();
+        services.Configure<OpenAiOptions>(options =>
+        {
+            options.ApiKey = "test-key";
+            options.BaseUrl = "ftp://api.openai.com/v1/";
         });
 
         services.AddOpenAiApi();

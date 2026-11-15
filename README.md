@@ -34,7 +34,7 @@ Add the following to `appsettings.json` (or use user secrets / environment varia
 }
 ```
 
-`BaseUrl` defaults to `https://api.openai.com/v1/` and `Timeout` defaults to 100 seconds when omitted. `ApiKey` is required.
+`BaseUrl` defaults to `https://api.openai.com/v1/` and `Timeout` defaults to 100 seconds when omitted. `ApiKey` is required. The section name is arbitrary — it only has to match the `Configure` call below. (The bundled sample app uses its own `OpenAI:Api` section, see [Sample application](#sample-application).)
 
 Register the SDK in your DI container:
 
@@ -50,10 +50,16 @@ builder.Services.AddOpenAiApi();
 `AddOpenAiApi` registers a named `HttpClient` (`OpenAI.SDK.Configuration.ConfigurationExtensions.HttpClientName` == `"OpenAI"`) so you can attach Polly policies, proxies or custom handlers:
 
 ```csharp
-builder.Services.AddHttpClient(OpenAI.SDK.Configuration.ConfigurationExtensions.HttpClientName, client =>
-{
-    client.Timeout = TimeSpan.FromMinutes(5);
-});
+builder.Services.AddHttpClient(OpenAI.SDK.Configuration.ConfigurationExtensions.HttpClientName)
+    .AddTransientHttpErrorPolicy(p => p.WaitAndRetryAsync(3, _ => TimeSpan.FromSeconds(1)));
+```
+
+(The retry policy comes from the `Microsoft.Extensions.Http.Polly` package and is shown as an example — the SDK itself takes no dependency on Polly.)
+
+`OpenAiOptions.Timeout` bounds the whole request, including reading the response body, and takes precedence over `HttpClient.Timeout`. Configure it through options rather than through `AddHttpClient(..., client => client.Timeout = ...)`:
+
+```csharp
+builder.Services.Configure<OpenAiOptions>(options => options.Timeout = TimeSpan.FromMinutes(5));
 ```
 
 If `ApiKey` is missing or `BaseUrl` is invalid, resolving any API throws a clear `ArgumentException` instead of a cryptic `NullReferenceException`/`UriFormatException`.
@@ -110,7 +116,7 @@ public sealed class ChatService
 }
 ```
 
-`ChatMessage.Content` accepts either a string or an array of content parts (for vision input). Tool calling is supported via `Tools`, `ToolChoice`, `ToolCalls` and `ToolCallId`.
+`ChatMessage.Content` accepts either a string or an array of content parts (for vision input). Response messages expose plain text as `string`, so `message.Content as string` and `message.ContentText` both work; multi-part content is returned as a `JsonElement` array. Tool calling is supported via `Tools`, `ToolChoice`, `ToolCalls` and `ToolCallId`.
 
 ### Image generation
 
@@ -155,7 +161,7 @@ catch (OpenAiApiException ex)
 }
 ```
 
-`OpenAiApiException` exposes `StatusCode`, `ResponseContents`, `RequestUri`, `ResponseHeaders` and `RetryAfter`. Network/JSON failures surface as `HttpRequestException`/`JsonException`/`OperationCanceledException`.
+`OpenAiApiException` exposes `StatusCode`, `ResponseContents`, `RequestUri`, `ResponseHeaders` and `RetryAfter`. Its `Message` contains the status code, request URI and a truncated (up to 1024 characters) response body. A body that cannot be deserialized into the expected DTO is reported the same way, with the original `JsonException` in `InnerException`; transport failures surface as `HttpRequestException`, and cancellation as `OperationCanceledException`/`TaskCanceledException`. A successful response with an empty body (for example `204 No Content`) returns `default` instead of throwing.
 
 ### Cancellation
 
@@ -179,7 +185,7 @@ You can also override the base URL with `OpenAI:Api:BaseUrl`. If the API key is 
 
 ## Release notes
 
-See [RELEASE_NOTES.md](RELEASE_NOTES.md) for the full changelog.
+The full changelog lives in `RELEASE_NOTES.md` in the repository (it is not packed into the NuGet package).
 
 ## Version history
 
