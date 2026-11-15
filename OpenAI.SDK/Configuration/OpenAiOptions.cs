@@ -1,8 +1,11 @@
-﻿namespace OpenAI.SDK.Configuration
+﻿using System;
+
+namespace OpenAI.SDK.Configuration
 {
     public class OpenAiOptions
     {
         public string ApiKey { get; set; }
         public string BaseUrl { get; set; } = "https://api.openai.com/v1/";
+        public TimeSpan Timeout { get; set; } = TimeSpan.FromSeconds(100);
     }
 }

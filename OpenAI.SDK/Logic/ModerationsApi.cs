@@ -4,6 +4,7 @@ using OpenAI.SDK.Configuration;
 using OpenAI.SDK.Models.Moderations;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Net.Http;
 using System.Threading;
 using System.Threading.Tasks;
@@ -24,6 +25,10 @@ namespace OpenAI.SDK.Logic
 
         public Task<ModerationResponse> CreateModerationAsync(string input, string model = null, CancellationToken cancellationToken = default)
         {
+            if (string.IsNullOrWhiteSpace(input))
+            {
+                throw new ArgumentException("Input is required.", nameof(input));
+            }
             return CreateModerationAsync(new string[] { input }, model, cancellationToken);
         }
 
@@ -35,8 +40,12 @@ namespace OpenAI.SDK.Logic
 
         public async Task<ModerationResponse> CreateModerationAsync(string[] input, string model = null, CancellationToken cancellationToken = default)
         {
+            if (input == null || input.Length == 0 || input.All(string.IsNullOrWhiteSpace))
+            {
+                throw new ArgumentException("Input is required.", nameof(input));
+            }
             var result = await ExecuteRequest<ModerationRequest, ModerationResponse>(HttpMethod.Post, "moderations",
-                new ModerationRequest { Input = new List<string>(input), Model = model }, cancellationToken);
+                new ModerationRequest { Input = new List<string>(input), Model = model }, cancellationToken).ConfigureAwait(false);
             return result;
         }
     }

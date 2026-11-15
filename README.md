@@ -15,17 +15,28 @@ Most of the samples are available in OpenAI.SDK.SampleConsoleApp app Program.cs 
 If the API key is missing, the sample fails fast with a clear `InvalidOperationException` explaining how to configure it. You can also override the base URL with `OpenAI:Api:BaseUrl`.
 
 ## Supported APIs
-Every api integration is provided as separate interface class.
-Following APIs are supported:
-1. [Text Completion.](https://platform.openai.com/docs/api-reference/completions). Implemented as ICompletionsApi
-2. [Chat](https://platform.openai.com/docs/api-reference/chat). Implemented as IChatApi.
-3. [Edits](https://platform.openai.com/docs/api-reference/edits). Implemented as IEditsApi.
-4. [Images](https://platform.openai.com/docs/api-reference/images). Implemented as IImagesApi.
-5. [Embeddings](https://platform.openai.com/docs/api-reference/embeddings). Implemented as IEmbeddingsApi.
-6. [Files](https://platform.openai.com/docs/api-reference/files). Implemented as IFilesApi.
-7. [Fine-tunes](https://platform.openai.com/docs/api-reference/fine-tunes). Implemented as IFineTunesApi.
-8. [Moderations](https://platform.openai.com/docs/api-reference/moderations). Implemented as IModerationsApi.
-9. [Engines](https://platform.openai.com/docs/api-reference/engines). Implemented as IEnginesApi.
+Every API integration is provided as a separate interface class. Some of the upstream endpoints below have been retired by OpenAI; the corresponding interfaces remain registered for backward compatibility and are marked `[Obsolete]`.
+
+Currently supported:
+1. [Chat](https://platform.openai.com/docs/api-reference/chat). Implemented as `IChatApi`.
+2. [Images](https://platform.openai.com/docs/api-reference/images). Implemented as `IImagesApi`.
+3. [Embeddings](https://platform.openai.com/docs/api-reference/embeddings). Implemented as `IEmbeddingsApi`.
+4. [Files](https://platform.openai.com/docs/api-reference/files). Implemented as `IFilesApi`.
+5. [Moderations](https://platform.openai.com/docs/api-reference/moderations). Implemented as `IModerationsApi`.
+6. [Models](https://platform.openai.com/docs/api-reference/models). Implemented as `IModelsApi`.
+
+Retired (kept for backward compatibility, marked `[Obsolete]`):
+1. Text Completion — `ICompletionsApi`.
+2. Edits — `IEditsApi`.
+3. Fine-tunes — `IFineTunesApi`.
+4. Engines — `IEnginesApi`.
+5. Image variations — `IImagesApi.CreateImageVariation*`.
+
+Notes:
+- Streaming (`stream: true`) is not supported; setting it throws `NotSupportedException`.
+- Non-2xx responses throw `OpenAiApiException` (status code, body, request URI, response headers, `Retry-After`).
+- `OpenAiOptions.Timeout` (default 100s) controls the request timeout; the SDK uses a named `HttpClient` (`ConfigurationExtensions.HttpClientName` = `"OpenAI"`) so Polly/retry policies can be attached.
+- `BaseUrl` defaults to `https://api.openai.com/v1/`; `ApiKey` is required.
 
 ## How to use
 This section describes a basic usage scenario for ASP.NET Core Web Api projects.

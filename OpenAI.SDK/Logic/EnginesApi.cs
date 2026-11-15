@@ -26,8 +26,8 @@ namespace OpenAI.SDK.Logic
 
         public async Task<List<EngineInfo>> ListEnginesAsync(CancellationToken cancellationToken = default)
         {
-            var result = await ExecuteRequest<ListResponse<EngineInfo>>(HttpMethod.Get, "engines", cancellationToken);
-            return result.Data;
+            var result = await ExecuteRequest<ListResponse<EngineInfo>>(HttpMethod.Get, "engines", cancellationToken).ConfigureAwait(false);
+            return result != null ? result.Data : null;
         }
 
         [Obsolete("Use the overload that accepts a CancellationToken.")]
@@ -38,7 +38,11 @@ namespace OpenAI.SDK.Logic
 
         public async Task<EngineInfo> RetrieveEngineAsync(string engineId, CancellationToken cancellationToken = default)
         {
-            var result = await ExecuteRequest<EngineInfo>(HttpMethod.Get, $"engines/{engineId}", cancellationToken);
+            if (string.IsNullOrWhiteSpace(engineId))
+            {
+                throw new ArgumentException("Engine id is required.", nameof(engineId));
+            }
+            var result = await ExecuteRequest<EngineInfo>(HttpMethod.Get, $"engines/{engineId}", cancellationToken).ConfigureAwait(false);
             return result;
         }
     }

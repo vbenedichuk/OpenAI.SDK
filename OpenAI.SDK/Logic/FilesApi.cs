@@ -8,7 +8,6 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Net.Http;
-using System.Net.Http.Headers;
 using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
@@ -32,8 +31,8 @@ namespace OpenAI.SDK.Logic
         /// <inheritdoc/>
         public async Task<List<FileDetails>> ListFilesAsync(CancellationToken cancellationToken = default)
         {
-            var response = await ExecuteRequest<ListResponse<FileDetails>>(HttpMethod.Get, $"files", cancellationToken);
-            return response.Data;
+            var response = await ExecuteRequest<ListResponse<FileDetails>>(HttpMethod.Get, "files", cancellationToken).ConfigureAwait(false);
+            return response != null ? response.Data : null;
         }
 
         /// <inheritdoc/>
@@ -46,7 +45,11 @@ namespace OpenAI.SDK.Logic
         /// <inheritdoc/>
         public async Task<DeleteFileResponse> DeleteFileAsync(string fileId, CancellationToken cancellationToken = default)
         {
-            var response = await ExecuteRequest<DeleteFileResponse>(HttpMethod.Delete, $"files/{fileId}", cancellationToken);
+            if (string.IsNullOrWhiteSpace(fileId))
+            {
+                throw new ArgumentException("File id is required.", nameof(fileId));
+            }
+            var response = await ExecuteRequest<DeleteFileResponse>(HttpMethod.Delete, $"files/{fileId}", cancellationToken).ConfigureAwait(false);
             return response;
         }
 
@@ -60,7 +63,11 @@ namespace OpenAI.SDK.Logic
         /// <inheritdoc/>
         public async Task<FileDetails> RetrieveFileAsync(string fileId, CancellationToken cancellationToken = default)
         {
-            var response = await ExecuteRequest<FileDetails>(HttpMethod.Get, $"files/{fileId}", cancellationToken);
+            if (string.IsNullOrWhiteSpace(fileId))
+            {
+                throw new ArgumentException("File id is required.", nameof(fileId));
+            }
+            var response = await ExecuteRequest<FileDetails>(HttpMethod.Get, $"files/{fileId}", cancellationToken).ConfigureAwait(false);
             return response;
         }
 
@@ -74,22 +81,12 @@ namespace OpenAI.SDK.Logic
         /// <inheritdoc/>
         public async Task<byte[]> RetrieveFileContentAsync(string fileId, CancellationToken cancellationToken = default)
         {
-            var url = new Uri(_baseUri, $"files/{fileId}/content");
-            using var request = new HttpRequestMessage(HttpMethod.Get, url);
-            request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", _options.ApiKey);
-            using var client = _clientFactory.CreateClient();
-            using var response = await client.SendAsync(request, cancellationToken);
-            if (response.IsSuccessStatusCode)
+            if (string.IsNullOrWhiteSpace(fileId))
             {
-                using (var stream = await response.Content.ReadAsStreamAsync())
-                using (var memoryStream = new MemoryStream())
-                {
-                    await stream.CopyToAsync(memoryStream, 81920, cancellationToken);
-                    return memoryStream.ToArray();
-                }
+                throw new ArgumentException("File id is required.", nameof(fileId));
             }
-
-            throw new OpenAiApiException(response.StatusCode, await response.Content.ReadAsStringAsync(), response.ReasonPhrase);
+            var content = await ExecuteRawRequestAsync(HttpMethod.Get, $"files/{fileId}/content", cancellationToken).ConfigureAwait(false);
+            return content;
         }
 
         /// <inheritdoc/>
@@ -104,36 +101,14 @@ namespace OpenAI.SDK.Logic
         {
             if (file == null) throw new ArgumentException("File is required", nameof(file));
             if (string.IsNullOrWhiteSpace(fileName)) throw new ArgumentException("Filename is required", nameof(fileName));
-            if (string.IsNullOrWhiteSpace(purpose)) throw new ArgumentException("Filename is purpose", nameof(purpose));
-
-            return UploadFileImplAsync(file, fileName, purpose, cancellationToken);
-        }
-
-        private async Task<FileDetails> UploadFileImplAsync(Stream file, string fileName, string purpose, CancellationToken cancellationToken)
-        {
-            var url = new Uri(_baseUri, "files");
-            using var request = new HttpRequestMessage(HttpMethod.Post, url);
-            request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", _options.ApiKey);
+            if (string.IsNullOrWhiteSpace(purpose)) throw new ArgumentException("Purpose is required", nameof(purpose));
 
             var content = new MultipartFormDataContent
             {
                 { new StreamContent(new NonDisposingStream(file)), "file", fileName },
                 { new StringContent(purpose), "purpose" }
             };
-            request.Content = content;
-            using var client = _clientFactory.CreateClient();
-            using var response = await client.SendAsync(request, cancellationToken);
-            if (response.IsSuccessStatusCode)
-            {
-                using (var stream = await response.Content.ReadAsStreamAsync())
-                {
-                    return await JsonSerializer.DeserializeAsync<FileDetails>(stream, cancellationToken: cancellationToken);
-                }
-            }
-            else
-            {
-                throw new OpenAiApiException(response.StatusCode, await response.Content.ReadAsStringAsync(), response.ReasonPhrase);
-            }
+            return ExecuteMultipartRequestAsync<FileDetails>(HttpMethod.Post, "files", content, cancellationToken);
         }
     }
 }

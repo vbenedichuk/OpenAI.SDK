@@ -133,17 +133,24 @@ public class HttpRequestTests
     public async Task ChatApi_ForwardsCancellationToken()
     {
         using var cts = new CancellationTokenSource();
-        var handler = new StubHttpMessageHandler(_ => JsonResponse(ChatCompletionJson));
+        var handler = new AsyncStubHandler(async (request, ct) =>
+        {
+            await Task.Delay(Timeout.Infinite, ct);
+            return JsonResponse(ChatCompletionJson);
+        });
         using var provider = CreateProvider(handler);
 
         var chatApi = provider.GetRequiredService<IChatApi>();
-        await chatApi.CreateCompletionAsync(new ApiChatCompletionRequest
+        var task = chatApi.CreateCompletionAsync(new ApiChatCompletionRequest
         {
             Model = "gpt-3.5-turbo",
             Messages = new List<ChatMessage> { new() { Role = "user", Content = "hi" } }
         }, cts.Token);
+        await Task.Delay(50);
+        cts.Cancel();
 
-        Assert.True(handler.LastCancellationToken.CanBeCanceled);
+        await Assert.ThrowsAnyAsync<OperationCanceledException>(() => task);
+        Assert.True(handler.LastToken.IsCancellationRequested);
     }
 
     [Fact]
@@ -165,43 +172,64 @@ public class HttpRequestTests
     public async Task ModelsApi_ForwardsCancellationToken()
     {
         using var cts = new CancellationTokenSource();
-        var handler = new StubHttpMessageHandler(_ => JsonResponse(ModelsListJson));
+        var handler = new AsyncStubHandler(async (request, ct) =>
+        {
+            await Task.Delay(Timeout.Infinite, ct);
+            return JsonResponse(ModelsListJson);
+        });
         using var provider = CreateProvider(handler);
 
         var modelsApi = provider.GetRequiredService<IModelsApi>();
-        await modelsApi.GetModelsAsync(cts.Token);
+        var task = modelsApi.GetModelsAsync(cts.Token);
+        await Task.Delay(50);
+        cts.Cancel();
 
-        Assert.True(handler.LastCancellationToken.CanBeCanceled);
+        await Assert.ThrowsAnyAsync<OperationCanceledException>(() => task);
+        Assert.True(handler.LastToken.IsCancellationRequested);
     }
 
     [Fact]
     public async Task RetrieveFileContentAsync_ForwardsCancellationToken()
     {
         using var cts = new CancellationTokenSource();
-        var handler = new StubHttpMessageHandler(_ => new HttpResponseMessage(HttpStatusCode.OK)
+        var handler = new AsyncStubHandler(async (request, ct) =>
         {
-            Content = new ByteArrayContent(new byte[] { 1, 2, 3 })
+            await Task.Delay(Timeout.Infinite, ct);
+            return new HttpResponseMessage(HttpStatusCode.OK)
+            {
+                Content = new ByteArrayContent(new byte[] { 1, 2, 3 })
+            };
         });
         using var provider = CreateProvider(handler);
 
         var filesApi = provider.GetRequiredService<IFilesApi>();
-        await filesApi.RetrieveFileContentAsync("file-123", cts.Token);
+        var task = filesApi.RetrieveFileContentAsync("file-123", cts.Token);
+        await Task.Delay(50);
+        cts.Cancel();
 
-        Assert.True(handler.LastCancellationToken.CanBeCanceled);
+        await Assert.ThrowsAnyAsync<OperationCanceledException>(() => task);
+        Assert.True(handler.LastToken.IsCancellationRequested);
     }
 
     [Fact]
     public async Task CreateImageEditAsync_ForwardsCancellationToken()
     {
         using var cts = new CancellationTokenSource();
-        var handler = new StubHttpMessageHandler(_ => JsonResponse(ImageResponseJson));
+        var handler = new AsyncStubHandler(async (request, ct) =>
+        {
+            await Task.Delay(Timeout.Infinite, ct);
+            return JsonResponse(ImageResponseJson);
+        });
         using var provider = CreateProvider(handler);
 
         var imagesApi = provider.GetRequiredService<IImagesApi>();
         using var image = new MemoryStream(new byte[] { 1, 2, 3 });
-        await imagesApi.CreateImageEditAsync(image, "img.png", "a prompt", cancellationToken: cts.Token);
+        var task = imagesApi.CreateImageEditAsync(image, "img.png", "a prompt", cancellationToken: cts.Token);
+        await Task.Delay(50);
+        cts.Cancel();
 
-        Assert.True(handler.LastCancellationToken.CanBeCanceled);
+        await Assert.ThrowsAnyAsync<OperationCanceledException>(() => task);
+        Assert.True(handler.LastToken.IsCancellationRequested);
     }
 
     [Fact]
@@ -232,7 +260,8 @@ public class HttpRequestTests
     public async Task CreateImageEditAsync_IncludesModelWhenProvided()
     {
         string? requestBody = null;
-        var handler = new StubHttpMessageHandler(request =>
+        StubHttpMessageHandler handler = null;
+        handler = new StubHttpMessageHandler(request =>
         {
             requestBody = request.Content!.ReadAsStringAsync().GetAwaiter().GetResult();
             return JsonResponse(ImageResponseJson);
@@ -266,6 +295,108 @@ public class HttpRequestTests
         Assert.Single(handler.Requests);
     }
 #pragma warning restore CS0618
+
+    [Fact]
+    public async Task ChatApi_ThrowsApiExceptionOnErrorStatus()
+    {
+        var handler = new StubHttpMessageHandler(_ => new HttpResponseMessage(HttpStatusCode.Unauthorized)
+        {
+            ReasonPhrase = "Unauthorized",
+            Content = new StringContent("{\"error\":{\"message\":\"invalid api key\"}}", Encoding.UTF8, "application/json")
+        });
+        using var provider = CreateProvider(handler);
+
+        var chatApi = provider.GetRequiredService<IChatApi>();
+
+        var exception = await Assert.ThrowsAsync<OpenAiApiException>(() => chatApi.CreateCompletionAsync(new ApiChatCompletionRequest
+        {
+            Model = "gpt-3.5-turbo",
+            Messages = new List<ChatMessage> { new() { Role = "user", Content = "hi" } }
+        }, CancellationToken.None));
+
+        Assert.Equal(HttpStatusCode.Unauthorized, exception.StatusCode);
+        Assert.Contains("invalid api key", exception.ResponseContents);
+        Assert.Contains("401", exception.Message);
+    }
+
+    [Fact]
+    public async Task ChatApi_SendsExpectedRequestShape()
+    {
+        string requestBody = null;
+        StubHttpMessageHandler handler = null;
+        handler = new StubHttpMessageHandler(request =>
+        {
+            requestBody = request.Content.ReadAsStringAsync().GetAwaiter().GetResult();
+            return JsonResponse(ChatCompletionJson);
+        });
+        using var provider = CreateProvider(handler);
+
+        var chatApi = provider.GetRequiredService<IChatApi>();
+        await chatApi.CreateCompletionAsync(new ApiChatCompletionRequest
+        {
+            Model = "gpt-3.5-turbo",
+            Messages = new List<ChatMessage> { new() { Role = "user", Content = "hi" } },
+            Temperature = null
+        }, CancellationToken.None);
+
+        var request = Assert.Single(handler.Requests);
+        Assert.Equal(HttpMethod.Post, request.Method);
+        Assert.NotNull(request.Headers.Authorization);
+        Assert.Equal("Bearer", request.Headers.Authorization.Scheme);
+        Assert.Equal("test-key", request.Headers.Authorization.Parameter);
+        Assert.NotNull(request.Content);
+        Assert.Equal("application/json", request.Content.Headers.ContentType.MediaType);
+
+        Assert.NotNull(requestBody);
+        using var document = JsonDocument.Parse(requestBody);
+        Assert.Equal("gpt-3.5-turbo", document.RootElement.GetProperty("model").GetString());
+        Assert.True(document.RootElement.TryGetProperty("messages", out _));
+        Assert.False(document.RootElement.TryGetProperty("temperature", out _));
+    }
+
+    [Fact]
+    public async Task ChatApi_ReturnsDefault_WhenResponseBodyEmpty()
+    {
+        var handler = new StubHttpMessageHandler(_ => new HttpResponseMessage(HttpStatusCode.OK)
+        {
+            Content = new StringContent(string.Empty, Encoding.UTF8, "application/json")
+        });
+        using var provider = CreateProvider(handler);
+
+        var chatApi = provider.GetRequiredService<IChatApi>();
+        var result = await chatApi.CreateCompletionAsync(new ApiChatCompletionRequest
+        {
+            Model = "gpt-3.5-turbo",
+            Messages = new List<ChatMessage> { new() { Role = "user", Content = "hi" } }
+        }, CancellationToken.None);
+
+        Assert.Null(result);
+    }
+
+    [Fact]
+    public async Task ChatApi_ThrowsArgumentNullException_WhenRequestIsNull()
+    {
+        using var provider = CreateProvider(new StubHttpMessageHandler(_ => JsonResponse(ChatCompletionJson)));
+        var chatApi = provider.GetRequiredService<IChatApi>();
+
+        await Assert.ThrowsAsync<ArgumentNullException>(() => chatApi.CreateCompletionAsync(null, CancellationToken.None));
+    }
+
+    private sealed class AsyncStubHandler : HttpMessageHandler
+    {
+        private readonly Func<HttpRequestMessage, CancellationToken, Task<HttpResponseMessage>> _responder;
+        public CancellationToken LastToken;
+        public AsyncStubHandler(Func<HttpRequestMessage, CancellationToken, Task<HttpResponseMessage>> responder) => _responder = responder;
+        protected override Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken)
+        {
+            LastToken = cancellationToken;
+            return _responder(request, cancellationToken);
+        }
+    }
+
+
+
+
 
     private static ServiceProvider CreateProvider(HttpMessageHandler handler, string baseUrl = "https://api.openai.com/v1/")
     {

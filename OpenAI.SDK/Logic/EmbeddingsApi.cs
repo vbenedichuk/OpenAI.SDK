@@ -24,7 +24,19 @@ namespace OpenAI.SDK.Logic
 
         public async Task<EmbeddingsResponse> CreateEmbeddingsAsync(EmbeddingsRequest request, CancellationToken cancellationToken = default)
         {
-            var result = await ExecuteRequest<EmbeddingsRequest, EmbeddingsResponse>(HttpMethod.Post, "embeddings", request, cancellationToken);
+            if (request == null)
+            {
+                throw new ArgumentNullException(nameof(request));
+            }
+            if (string.IsNullOrWhiteSpace(request.Model))
+            {
+                throw new ArgumentException("Model is required.", nameof(request));
+            }
+            if (request.Input == null || request.Input.Length == 0)
+            {
+                throw new ArgumentException("Input is required.", nameof(request));
+            }
+            var result = await ExecuteRequest<EmbeddingsRequest, EmbeddingsResponse>(HttpMethod.Post, "embeddings", request, cancellationToken).ConfigureAwait(false);
             return result;
         }
     }

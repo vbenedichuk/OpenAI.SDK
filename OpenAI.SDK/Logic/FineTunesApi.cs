@@ -28,7 +28,11 @@ namespace OpenAI.SDK.Logic
 
         public async Task<FineTune> CancelFineTuneAsync(string fineTuneId, CancellationToken cancellationToken = default)
         {
-            var response = await ExecuteRequest<FineTune>(HttpMethod.Post, $"fine-tunes/{fineTuneId}/cancel", cancellationToken);
+            if (string.IsNullOrWhiteSpace(fineTuneId))
+            {
+                throw new ArgumentException("Fine-tune id is required.", nameof(fineTuneId));
+            }
+            var response = await ExecuteRequest<FineTune>(HttpMethod.Post, $"fine-tunes/{fineTuneId}/cancel", cancellationToken).ConfigureAwait(false);
             return response;
         }
 
@@ -40,7 +44,15 @@ namespace OpenAI.SDK.Logic
 
         public async Task<FineTune> CreateFineTuneAsync(CreateFineTuneRequest request, CancellationToken cancellationToken = default)
         {
-            var response = await ExecuteRequest<CreateFineTuneRequest, FineTune>(HttpMethod.Post, "fine-tunes", request, cancellationToken);
+            if (request == null)
+            {
+                throw new ArgumentNullException(nameof(request));
+            }
+            if (string.IsNullOrWhiteSpace(request.TrainingFile))
+            {
+                throw new ArgumentException("Training file is required.", nameof(request));
+            }
+            var response = await ExecuteRequest<CreateFineTuneRequest, FineTune>(HttpMethod.Post, "fine-tunes", request, cancellationToken).ConfigureAwait(false);
             return response;
         }
 
@@ -52,7 +64,11 @@ namespace OpenAI.SDK.Logic
 
         public async Task<DeleteFineTuneResponse> DeleteFineTuneModelAsync(string model, CancellationToken cancellationToken = default)
         {
-            var response = await ExecuteRequest<DeleteFineTuneResponse>(HttpMethod.Delete, $"models/{model}", cancellationToken);
+            if (string.IsNullOrWhiteSpace(model))
+            {
+                throw new ArgumentException("Model is required.", nameof(model));
+            }
+            var response = await ExecuteRequest<DeleteFineTuneResponse>(HttpMethod.Delete, $"models/{model}", cancellationToken).ConfigureAwait(false);
             return response;
         }
 
@@ -64,8 +80,16 @@ namespace OpenAI.SDK.Logic
 
         public async Task<List<FineTuneEvent>> ListFineTuneEventsAsync(string fineTuneId, bool? stream = null, CancellationToken cancellationToken = default)
         {
-            var response = await ExecuteRequest<ListResponse<FineTuneEvent>>(HttpMethod.Get, $"fine-tunes/{fineTuneId}/events", cancellationToken);
-            return response.Data;
+            if (string.IsNullOrWhiteSpace(fineTuneId))
+            {
+                throw new ArgumentException("Fine-tune id is required.", nameof(fineTuneId));
+            }
+            if (stream == true)
+            {
+                throw new NotSupportedException("Streaming responses are not supported by this SDK.");
+            }
+            var response = await ExecuteRequest<ListResponse<FineTuneEvent>>(HttpMethod.Get, $"fine-tunes/{fineTuneId}/events", cancellationToken).ConfigureAwait(false);
+            return response != null ? response.Data : null;
         }
 
         [Obsolete("Use the overload that accepts a CancellationToken.")]
@@ -76,8 +100,8 @@ namespace OpenAI.SDK.Logic
 
         public async Task<List<FineTune>> ListFineTunesAsync(CancellationToken cancellationToken = default)
         {
-            var response = await ExecuteRequest<ListResponse<FineTune>>(HttpMethod.Get, $"fine-tunes", cancellationToken);
-            return response.Data;
+            var response = await ExecuteRequest<ListResponse<FineTune>>(HttpMethod.Get, "fine-tunes", cancellationToken).ConfigureAwait(false);
+            return response != null ? response.Data : null;
         }
 
         [Obsolete("Use the overload that accepts a CancellationToken.")]
@@ -88,7 +112,11 @@ namespace OpenAI.SDK.Logic
 
         public async Task<FineTune> RetrieveFineTuneAsync(string fineTuneId, CancellationToken cancellationToken = default)
         {
-            var response = await ExecuteRequest<FineTune>(HttpMethod.Get, $"fine-tunes/{fineTuneId}", cancellationToken);
+            if (string.IsNullOrWhiteSpace(fineTuneId))
+            {
+                throw new ArgumentException("Fine-tune id is required.", nameof(fineTuneId));
+            }
+            var response = await ExecuteRequest<FineTune>(HttpMethod.Get, $"fine-tunes/{fineTuneId}", cancellationToken).ConfigureAwait(false);
             return response;
         }
     }

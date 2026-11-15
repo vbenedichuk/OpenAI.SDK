@@ -26,7 +26,19 @@ namespace OpenAI.SDK.Logic
         /// <inheritdoc/>
         public async Task<ApiCreateEditResponse> CreateEditAsync(ApiCreateEditRequest createEditRequest, CancellationToken cancellationToken = default)
         {
-            var response = await ExecuteRequest<ApiCreateEditRequest, ApiCreateEditResponse>(HttpMethod.Post, "edits", createEditRequest, cancellationToken);
+            if (createEditRequest == null)
+            {
+                throw new ArgumentNullException(nameof(createEditRequest));
+            }
+            if (string.IsNullOrWhiteSpace(createEditRequest.Model))
+            {
+                throw new ArgumentException("Model is required.", nameof(createEditRequest));
+            }
+            if (string.IsNullOrWhiteSpace(createEditRequest.Instruction))
+            {
+                throw new ArgumentException("Instruction is required.", nameof(createEditRequest));
+            }
+            var response = await ExecuteRequest<ApiCreateEditRequest, ApiCreateEditResponse>(HttpMethod.Post, "edits", createEditRequest, cancellationToken).ConfigureAwait(false);
             return response;
         }
     }

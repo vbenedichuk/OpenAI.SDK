@@ -35,12 +35,20 @@ namespace OpenAI.SDK.Logic
         /// <inheritdoc/>
         public async Task<ApiCompletionResponse> CreateCompletionAsync(ApiCompletionRequest apiCompletionRequest, CancellationToken cancellationToken = default)
         {
+            if (apiCompletionRequest == null)
+            {
+                throw new ArgumentNullException(nameof(apiCompletionRequest));
+            }
+            if (string.IsNullOrWhiteSpace(apiCompletionRequest.Model))
+            {
+                throw new ArgumentException("Model is required.", nameof(apiCompletionRequest));
+            }
             if (apiCompletionRequest.Stream == true)
             {
                 throw new NotSupportedException("Streaming responses are not supported by this SDK.");
             }
 
-            var response = await ExecuteRequest<ApiCompletionRequest, ApiCompletionResponse>(HttpMethod.Post, "completions", apiCompletionRequest, cancellationToken);
+            var response = await ExecuteRequest<ApiCompletionRequest, ApiCompletionResponse>(HttpMethod.Post, "completions", apiCompletionRequest, cancellationToken).ConfigureAwait(false);
             return response;
         }        
     }

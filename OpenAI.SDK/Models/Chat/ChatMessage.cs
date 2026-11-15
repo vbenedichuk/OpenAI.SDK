@@ -1,4 +1,5 @@
-﻿using System.Text.Json.Serialization;
+﻿using System.Collections.Generic;
+using System.Text.Json.Serialization;
 
 namespace OpenAI.SDK.Models.Chat
 {
@@ -10,7 +11,20 @@ namespace OpenAI.SDK.Models.Chat
     {
         [JsonPropertyName("role")]
         public string Role { get; set; }
+
         [JsonPropertyName("content")]
-        public string Content { get; set; }
+        public object Content { get; set; }
+
+        [JsonPropertyName("name")]
+        public string Name { get; set; }
+
+        [JsonPropertyName("tool_calls")]
+        public List<ChatToolCall> ToolCalls { get; set; }
+
+        [JsonPropertyName("tool_call_id")]
+        public string ToolCallId { get; set; }
+
+        [JsonPropertyName("function_call")]
+        public ChatFunctionCall FunctionCall { get; set; }
     }
 }

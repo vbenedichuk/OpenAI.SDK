@@ -2,16 +2,16 @@
 using OpenAI.SDK.Abstractions;
 using OpenAI.SDK.Logic;
 using System;
-using System.Collections.Generic;
-using System.Text;
 
 namespace OpenAI.SDK.Configuration
 {
     public static class ConfigurationExtensions
     {
+        public const string HttpClientName = "OpenAI";
+
         public static IServiceCollection AddOpenAiApi(this IServiceCollection services)
         {
-            services.AddHttpClient();
+            services.AddHttpClient(HttpClientName);
 
             services.AddSingleton<IModelsApi, ModelsApi>();
 #pragma warning disable CS0612 // Retired APIs stay registered for backward compatibility.

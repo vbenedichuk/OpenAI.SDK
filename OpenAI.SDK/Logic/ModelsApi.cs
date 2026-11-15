@@ -26,8 +26,8 @@ namespace OpenAI.SDK.Logic
         /// <inheritdoc/>
         public async Task<List<ApiModel>> GetModelsAsync(CancellationToken cancellationToken = default)
         {
-            var response = await ExecuteRequest<ApiModelsResponse>(HttpMethod.Get, "models", cancellationToken);
-            return response.Data;
+            var response = await ExecuteRequest<ApiModelsResponse>(HttpMethod.Get, "models", cancellationToken).ConfigureAwait(false);
+            return response != null ? response.Data : null;
         }
 
         /// <inheritdoc/>
@@ -40,7 +40,11 @@ namespace OpenAI.SDK.Logic
         /// <inheritdoc/>
         public async Task<ApiModel> RetrieveModelAsync(string modelId, CancellationToken cancellationToken = default)
         {
-            var response = await ExecuteRequest<ApiModel>(HttpMethod.Get, $"models/{modelId}", cancellationToken);
+            if (string.IsNullOrWhiteSpace(modelId))
+            {
+                throw new ArgumentException("Model id is required.", nameof(modelId));
+            }
+            var response = await ExecuteRequest<ApiModel>(HttpMethod.Get, $"models/{modelId}", cancellationToken).ConfigureAwait(false);
             return response;
         }
     }
