@@ -78,4 +78,4 @@
 - `85d82bf` Add input validation, robust HTTP handling, ConfigureAwait, URL escaping, centralized requests, modern chat DTOs, and stronger tests
 - `bb27863` Clean up cancellation tests and remove nullable warnings
 - `c1cab14` Update README and add release notes
-- `c75e9f5` Fix response handling, timeouts and URL containment after code review
+- A review-driven hardening pass: buffer the response body once, apply the timeout to the whole request, confine resources to the base URL, read plain-text chat content as `string`, and close the related test gaps.
