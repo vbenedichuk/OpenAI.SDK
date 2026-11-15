@@ -13,7 +13,7 @@
 ## Build and test
 - `dotnet build OpenAI.sln` — compiles and packs the NuGet package (`GeneratePackageOnBuild=True`).
 - `dotnet build OpenAI.sln -p:GeneratePackageOnBuild=false` — compile only; useful for quick checks.
-- `dotnet test OpenAI.SDK.Tests/OpenAI.SDK.Tests.csproj` — all tests (87 at the time of writing).
+- `dotnet test OpenAI.SDK.Tests/OpenAI.SDK.Tests.csproj` — all tests (92 at the time of writing).
 - Single test: `dotnet test OpenAI.SDK.Tests/OpenAI.SDK.Tests.csproj --filter "FullyQualifiedName~TestName"`.
 - There is no CI, lint, formatter, or analyzer config; build + tests are the verification bar.
 
