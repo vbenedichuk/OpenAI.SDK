@@ -14,6 +14,6 @@ namespace OpenAI.SDK.Models.Chat
         public string FinishReason { get; set; }
 
         [JsonPropertyName("logprobs")]
-        public object Logprobs { get; set; }
+        public ChatCompletionLogprobs Logprobs { get; set; }
     }
 }

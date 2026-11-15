@@ -11,7 +11,7 @@ namespace OpenAI.SDK.Configuration
 
         public static IServiceCollection AddOpenAiApi(this IServiceCollection services)
         {
-            services.AddHttpClient(HttpClientName);
+            services.AddHttpClient(HttpClientName, client => client.Timeout = System.Threading.Timeout.InfiniteTimeSpan);
 
             services.AddSingleton<IModelsApi, ModelsApi>();
 #pragma warning disable CS0612 // Retired APIs stay registered for backward compatibility.

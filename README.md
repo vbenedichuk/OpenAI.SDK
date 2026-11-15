@@ -166,11 +166,11 @@ catch (OpenAiApiException ex)
 }
 ```
 
-`OpenAiApiException` exposes `StatusCode`, `ResponseContents`, `RequestUri`, `ResponseHeaders` and `RetryAfter`. Its `Message` contains the status code, request URI and a truncated (up to 1024 characters) response body. A body that cannot be deserialized into the expected DTO is reported the same way, with the original `JsonException` in `InnerException`; transport failures surface as `HttpRequestException`, and cancellation as `OperationCanceledException`/`TaskCanceledException`. A successful response with an empty body (for example `204 No Content`) returns `default` instead of throwing.
+`OpenAiApiException` exposes `StatusCode`, `ResponseContents`, `RequestUri`, `ResponseHeaders` and `RetryAfter`. Its `Message` contains the status code, request URI and a truncated (up to 1024 characters) response body. A successful response body that cannot be deserialized into the expected DTO throws `OpenAiResponseFormatException` with the original `JsonException` in `InnerException`; transport failures surface as `HttpRequestException`, caller cancellation as `OperationCanceledException`/`TaskCanceledException`, and a configured request timeout as `OpenAiTimeoutException`. A successful response with an empty body (for example `204 No Content`) returns `default` instead of throwing.
 
 ### Cancellation
 
-Every non-obsolete method accepts a `CancellationToken`. Pre-cancelled tokens are honoured and dynamic cancellation propagates to the underlying HTTP request. A configured `OpenAiOptions.Timeout` is combined with the caller token.
+Every non-obsolete method accepts a `CancellationToken`. Pre-cancelled tokens are honoured and dynamic cancellation propagates to the underlying HTTP request. A configured `OpenAiOptions.Timeout` is combined with the caller token; when that timeout elapses, the SDK throws `OpenAiTimeoutException`.
 
 ### Streaming
 

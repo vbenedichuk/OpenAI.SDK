@@ -8,7 +8,7 @@ namespace OpenAI.SDK.Models.Chat
         public string Id { get; set; }
 
         [JsonPropertyName("type")]
-        public string Type { get; set; }
+        public string Type { get; set; } = "function";
 
         [JsonPropertyName("function")]
         public ChatToolCallFunction Function { get; set; }

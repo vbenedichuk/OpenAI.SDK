@@ -9,6 +9,8 @@ namespace OpenAI.SDK.Models
         public string Id { get; set; }
         [JsonPropertyName("object")]
         public string Object { get; set; }
+        [JsonPropertyName("created")]
+        public long? Created { get; set; }
         [JsonPropertyName("owned_by")]
         public string OwnedBy { get; set; }
         [JsonPropertyName("permission")]

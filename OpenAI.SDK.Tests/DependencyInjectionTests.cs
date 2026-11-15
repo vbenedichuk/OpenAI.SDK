@@ -19,7 +19,11 @@ public class DependencyInjectionTests
         services.AddOpenAiApi();
 
         using var provider = services.BuildServiceProvider();
-        Assert.NotNull(provider.GetService<IHttpClientFactory>());
+        var factory = provider.GetRequiredService<IHttpClientFactory>();
+        Assert.NotNull(factory);
+
+        using var client = factory.CreateClient(ConfigurationExtensions.HttpClientName);
+        Assert.Equal(System.Threading.Timeout.InfiniteTimeSpan, client.Timeout);
     }
 
     [Fact]

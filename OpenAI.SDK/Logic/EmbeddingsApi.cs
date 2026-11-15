@@ -32,7 +32,15 @@ namespace OpenAI.SDK.Logic
             {
                 throw new ArgumentException("Model is required.", nameof(request));
             }
-            if (request.Input == null || request.Input.Length == 0)
+            if (request.Input == null)
+            {
+                throw new ArgumentException("Input is required.", nameof(request));
+            }
+            if (request.Input is string textInput && string.IsNullOrWhiteSpace(textInput))
+            {
+                throw new ArgumentException("Input is required.", nameof(request));
+            }
+            if (request.Input is System.Collections.ICollection collectionInput && collectionInput.Count == 0)
             {
                 throw new ArgumentException("Input is required.", nameof(request));
             }

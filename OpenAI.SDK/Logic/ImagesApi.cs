@@ -40,7 +40,7 @@ namespace OpenAI.SDK.Logic
 
         public Task<CreateImageResponse> CreateImageEditAsync(Stream image, string imageFileName, string prompt, Stream mask = null,
             string maskFileName = null, int? n = null, string size = null, string responseFormat = null, string user = null,
-            string model = null, CancellationToken cancellationToken = default)
+            string model = null, string quality = null, string outputFormat = null, string background = null, CancellationToken cancellationToken = default)
         {
             if (image == null)
             {
@@ -55,7 +55,7 @@ namespace OpenAI.SDK.Logic
                 throw new ArgumentException("Prompt is required.", nameof(prompt));
             }
 
-            var content = PrepareRequestContent(image, imageFileName, prompt, mask, maskFileName, n, size, responseFormat, user, model);
+            var content = PrepareRequestContent(image, imageFileName, prompt, mask, maskFileName, n, size, responseFormat, user, model, quality, outputFormat, background);
             return ExecuteMultipartRequestAsync<CreateImageResponse>(HttpMethod.Post, "images/edits", content, cancellationToken);
         }
 
@@ -84,7 +84,8 @@ namespace OpenAI.SDK.Logic
         }
 
         private static MultipartFormDataContent PrepareRequestContent(Stream image, string imageFileName, string prompt, Stream mask = null,
-            string maskFileName = null, int? n = null, string size = null, string responseFormat = null, string user = null, string model = null)
+            string maskFileName = null, int? n = null, string size = null, string responseFormat = null, string user = null, string model = null,
+            string quality = null, string outputFormat = null, string background = null)
         {
             var content = new MultipartFormDataContent()
             {
@@ -96,7 +97,8 @@ namespace OpenAI.SDK.Logic
             }
             if (mask != null)
             {
-                content.Add(new StreamContent(new NonDisposingStream(mask)), "mask", maskFileName);
+                var maskName = string.IsNullOrWhiteSpace(maskFileName) ? "mask.png" : maskFileName;
+                content.Add(new StreamContent(new NonDisposingStream(mask)), "mask", maskName);
             }
             if (n != null)
             {
@@ -117,6 +119,18 @@ namespace OpenAI.SDK.Logic
             if (!string.IsNullOrWhiteSpace(model))
             {
                 content.Add(new StringContent(model), "model");
+            }
+            if (!string.IsNullOrWhiteSpace(quality))
+            {
+                content.Add(new StringContent(quality), "quality");
+            }
+            if (!string.IsNullOrWhiteSpace(outputFormat))
+            {
+                content.Add(new StringContent(outputFormat), "output_format");
+            }
+            if (!string.IsNullOrWhiteSpace(background))
+            {
+                content.Add(new StringContent(background), "background");
             }
             return content;
         }

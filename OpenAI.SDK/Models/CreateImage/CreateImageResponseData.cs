@@ -8,5 +8,7 @@ namespace OpenAI.SDK.Models.CreateImage
         public string Url { get; set; }
         [JsonPropertyName("b64_json")]
         public string B64Json { get; set; }
+        [JsonPropertyName("revised_prompt")]
+        public string RevisedPrompt { get; set; }
     }
 }

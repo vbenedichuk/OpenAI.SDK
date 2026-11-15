@@ -68,7 +68,7 @@ public class HttpRequestTests
     public async Task ChatApi_NormalizesBaseUrlWithoutTrailingSlash()
     {
         var handler = new StubHttpMessageHandler(_ => JsonResponse(ChatCompletionJson));
-        using var provider = CreateProvider(handler, baseUrl: "https://api.openai.com/v1");
+        using var provider = CreateProvider(handler, out var factory, baseUrl: "https://api.openai.com/v1");
 
         var chatApi = provider.GetRequiredService<IChatApi>();
         await chatApi.CreateCompletionAsync(new ApiChatCompletionRequest
@@ -79,6 +79,7 @@ public class HttpRequestTests
 
         var request = Assert.Single(handler.Requests);
         Assert.Equal("https://api.openai.com/v1/chat/completions", request.RequestUri!.AbsoluteUri);
+        Assert.Equal(ConfigurationExtensions.HttpClientName, factory.LastName);
     }
 
     [Fact]
@@ -399,14 +400,14 @@ public class HttpRequestTests
         using var provider = CreateProvider(handler);
 
         var chatApi = provider.GetRequiredService<IChatApi>();
-        var exception = await Assert.ThrowsAsync<OpenAiApiException>(() => chatApi.CreateCompletionAsync(new ApiChatCompletionRequest
+        var exception = await Assert.ThrowsAsync<OpenAiResponseFormatException>(() => chatApi.CreateCompletionAsync(new ApiChatCompletionRequest
         {
             Model = "gpt-3.5-turbo",
             Messages = new List<ChatMessage> { new() { Role = "user", Content = "hi" } }
         }, CancellationToken.None));
 
         Assert.IsType<JsonException>(exception.InnerException);
-        Assert.Equal(malformed, exception.ResponseContents);
+        Assert.Equal(HttpStatusCode.OK, exception.StatusCode);
         Assert.Contains("Failed to deserialize", exception.Message);
         Assert.EndsWith("/v1/chat/completions", exception.RequestUri!.AbsoluteUri);
     }
@@ -414,19 +415,22 @@ public class HttpRequestTests
     [Fact]
     public async Task ChatApi_AppliesOptionsTimeoutToWholeRequest()
     {
-        var handler = new BlockingHandler();
+        var handler = new BlockingBodyHandler();
         using var provider = CreateProvider(handler, timeout: TimeSpan.FromMilliseconds(100));
         using var callerCts = new CancellationTokenSource();
 
         var chatApi = provider.GetRequiredService<IChatApi>();
-        await Assert.ThrowsAnyAsync<OperationCanceledException>(() => chatApi.CreateCompletionAsync(new ApiChatCompletionRequest
+        var task = chatApi.CreateCompletionAsync(new ApiChatCompletionRequest
         {
             Model = "gpt-3.5-turbo",
             Messages = new List<ChatMessage> { new() { Role = "user", Content = "hi" } }
-        }, callerCts.Token));
+        }, callerCts.Token);
+
+        await handler.ReadEntered.WaitAsync(TimeSpan.FromSeconds(5));
+        await Assert.ThrowsAsync<OpenAiTimeoutException>(() => task);
 
         Assert.False(callerCts.IsCancellationRequested);
-        Assert.True(handler.LastToken.IsCancellationRequested);
+        Assert.True(handler.ReadToken.IsCancellationRequested);
     }
 
     [Fact]
@@ -578,6 +582,83 @@ public class HttpRequestTests
         }
     }
 
+    private sealed class BlockingBodyHandler : HttpMessageHandler
+    {
+        private readonly TaskCompletionSource<bool> _readEntered = new(TaskCreationOptions.RunContinuationsAsynchronously);
+
+        public Task ReadEntered => _readEntered.Task;
+
+        public CancellationToken ReadToken { get; private set; }
+
+        protected override Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken)
+        {
+            var response = new HttpResponseMessage(HttpStatusCode.OK)
+            {
+                Content = new StreamContent(new BlockingReadStream(_readEntered, token => ReadToken = token))
+            };
+            return Task.FromResult(response);
+        }
+    }
+
+    private sealed class BlockingReadStream : Stream
+    {
+        private readonly TaskCompletionSource<bool> _entered;
+        private readonly Action<CancellationToken> _onRead;
+
+        public BlockingReadStream(TaskCompletionSource<bool> entered, Action<CancellationToken> onRead)
+        {
+            _entered = entered;
+            _onRead = onRead;
+        }
+
+        public override bool CanRead => true;
+
+        public override bool CanSeek => false;
+
+        public override bool CanWrite => false;
+
+        public override long Length => throw new NotSupportedException();
+
+        public override long Position
+        {
+            get => throw new NotSupportedException();
+            set => throw new NotSupportedException();
+        }
+
+        public override void Flush()
+        {
+        }
+
+        public override int Read(byte[] buffer, int offset, int count) => throw new NotSupportedException();
+
+        public override Task<int> ReadAsync(byte[] buffer, int offset, int count, CancellationToken cancellationToken)
+        {
+            _onRead(cancellationToken);
+            _entered.TrySetResult(true);
+            return WaitAsync(cancellationToken);
+        }
+
+        public override async ValueTask<int> ReadAsync(Memory<byte> buffer, CancellationToken cancellationToken = default)
+        {
+            _onRead(cancellationToken);
+            _entered.TrySetResult(true);
+            await Task.Delay(Timeout.Infinite, cancellationToken).ConfigureAwait(false);
+            return 0;
+        }
+
+        private static async Task<int> WaitAsync(CancellationToken cancellationToken)
+        {
+            await Task.Delay(Timeout.Infinite, cancellationToken).ConfigureAwait(false);
+            return 0;
+        }
+
+        public override long Seek(long offset, SeekOrigin origin) => throw new NotSupportedException();
+
+        public override void SetLength(long value) => throw new NotSupportedException();
+
+        public override void Write(byte[] buffer, int offset, int count) => throw new NotSupportedException();
+    }
+
     private sealed class NonSeekableStream : Stream
     {
         private readonly byte[] _buffer;
@@ -626,6 +707,9 @@ public class HttpRequestTests
 
 
     private static ServiceProvider CreateProvider(HttpMessageHandler handler, string baseUrl = "https://api.openai.com/v1/", TimeSpan? timeout = null)
+        => CreateProvider(handler, out _, baseUrl, timeout);
+
+    private static ServiceProvider CreateProvider(HttpMessageHandler handler, out StubHttpClientFactory factory, string baseUrl = "https://api.openai.com/v1/", TimeSpan? timeout = null)
     {
         var services = new ServiceCollection();
         services.Configure<OpenAiOptions>(options =>
@@ -637,7 +721,8 @@ public class HttpRequestTests
                 options.Timeout = timeout.Value;
             }
         });
-        services.AddSingleton<IHttpClientFactory>(new StubHttpClientFactory(handler));
+        factory = new StubHttpClientFactory(handler);
+        services.AddSingleton<IHttpClientFactory>(factory);
         services.AddOpenAiApi();
         return services.BuildServiceProvider();
     }
@@ -653,7 +738,13 @@ public class HttpRequestTests
 
         public StubHttpClientFactory(HttpMessageHandler handler) => _handler = handler;
 
-        public HttpClient CreateClient(string name) => new(_handler, disposeHandler: false);
+        public string? LastName { get; private set; }
+
+        public HttpClient CreateClient(string name)
+        {
+            LastName = name;
+            return new(_handler, disposeHandler: false);
+        }
     }
 
     private sealed class StubHttpMessageHandler : HttpMessageHandler

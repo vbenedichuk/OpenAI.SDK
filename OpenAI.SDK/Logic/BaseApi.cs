@@ -4,6 +4,7 @@ using Microsoft.Extensions.Options;
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Net;
 using System.Net.Http;
 using System.Net.Http.Headers;
 using System.Net.Http.Json;
@@ -17,6 +18,7 @@ namespace OpenAI.SDK.Logic
     internal class BaseApi
     {
         private const int CopyBufferSize = 81920;
+        private const int ErrorBodyLimit = 64 * 1024;
 
         private static readonly JsonSerializerOptions _requestSerializerOptions = new JsonSerializerOptions
         {
@@ -69,16 +71,34 @@ namespace OpenAI.SDK.Logic
                 content = JsonContent.Create(body, options: _requestSerializerOptions);
             }
 
-            var response = await SendAsync(method, resource, content, true, cancellationToken).ConfigureAwait(false);
-            EnsureSuccess(response);
-            return Deserialize<TResult>(response);
+            return await ExecuteJsonRequestAsync<TResult>(method, resource, content, cancellationToken).ConfigureAwait(false);
         }
 
         protected async Task<byte[]> ExecuteRawRequestAsync(HttpMethod method, string resource, CancellationToken cancellationToken = default)
         {
-            var response = await SendAsync(method, resource, null, false, cancellationToken).ConfigureAwait(false);
-            EnsureSuccess(response);
-            return response.Body;
+            ValidateRequest(method, resource);
+            var requestUri = BuildRequestUri(resource);
+            using var request = CreateRequest(method, requestUri, null, false);
+            using var client = _clientFactory.CreateClient(ConfigurationExtensions.HttpClientName);
+            using var requestCts = CreateRequestCancellationTokenSource(cancellationToken);
+
+            try
+            {
+                using var response = await client.SendAsync(request, HttpCompletionOption.ResponseHeadersRead, requestCts.Token).ConfigureAwait(false);
+                var resolvedRequestUri = response.RequestMessage != null ? response.RequestMessage.RequestUri : requestUri;
+
+                if (!response.IsSuccessStatusCode)
+                {
+                    var errorBody = await ReadContentAsStringAsync(response.Content, requestCts.Token, ErrorBodyLimit).ConfigureAwait(false);
+                    throw new OpenAiApiException(response.StatusCode, errorBody, response.ReasonPhrase, resolvedRequestUri, response.Headers);
+                }
+
+                return await ReadAllBytesAsync(response.Content, requestCts.Token).ConfigureAwait(false);
+            }
+            catch (OperationCanceledException ex) when (!cancellationToken.IsCancellationRequested && requestCts.IsCancellationRequested)
+            {
+                throw new OpenAiTimeoutException("The OpenAI request timed out.", ex);
+            }
         }
 
         protected async Task<T> ExecuteMultipartRequestAsync<T>(HttpMethod method, string resource, MultipartFormDataContent content, CancellationToken cancellationToken = default)
@@ -88,12 +108,107 @@ namespace OpenAI.SDK.Logic
                 throw new ArgumentNullException(nameof(content));
             }
 
-            var response = await SendAsync(method, resource, content, true, cancellationToken).ConfigureAwait(false);
-            EnsureSuccess(response);
-            return Deserialize<T>(response);
+            return await ExecuteJsonRequestAsync<T>(method, resource, content, cancellationToken).ConfigureAwait(false);
         }
 
-        private async Task<RawHttpResponse> SendAsync(HttpMethod method, string resource, HttpContent content, bool acceptJson, CancellationToken cancellationToken)
+        private async Task<TResult> ExecuteJsonRequestAsync<TResult>(HttpMethod method, string resource, HttpContent content, CancellationToken cancellationToken)
+        {
+            ValidateRequest(method, resource);
+            var requestUri = BuildRequestUri(resource);
+            using var request = CreateRequest(method, requestUri, content, true);
+            using var client = _clientFactory.CreateClient(ConfigurationExtensions.HttpClientName);
+            using var requestCts = CreateRequestCancellationTokenSource(cancellationToken);
+
+            try
+            {
+                using var response = await client.SendAsync(request, HttpCompletionOption.ResponseHeadersRead, requestCts.Token).ConfigureAwait(false);
+                var resolvedRequestUri = response.RequestMessage != null ? response.RequestMessage.RequestUri : requestUri;
+
+                if (!response.IsSuccessStatusCode)
+                {
+                    var errorBody = await ReadContentAsStringAsync(response.Content, requestCts.Token, ErrorBodyLimit).ConfigureAwait(false);
+                    throw new OpenAiApiException(response.StatusCode, errorBody, response.ReasonPhrase, resolvedRequestUri, response.Headers);
+                }
+
+                if (IsEmptyResponse(response))
+                {
+                    return default;
+                }
+
+                if (response.Content == null)
+                {
+                    return default;
+                }
+
+                var contentLength = response.Content.Headers.ContentLength;
+                using (var stream = await response.Content.ReadAsStreamAsync().ConfigureAwait(false))
+                {
+                    if (stream == null)
+                    {
+                        return default;
+                    }
+
+                    if (!contentLength.HasValue)
+                    {
+                        using (var buffer = new MemoryStream())
+                        {
+                            await stream.CopyToAsync(buffer, CopyBufferSize, requestCts.Token).ConfigureAwait(false);
+                            if (buffer.Length == 0)
+                            {
+                                return default;
+                            }
+
+                            buffer.Position = 0;
+                            try
+                            {
+                                return await JsonSerializer.DeserializeAsync<TResult>(buffer, _responseSerializerOptions, requestCts.Token).ConfigureAwait(false);
+                            }
+                            catch (JsonException ex)
+                            {
+                                throw new OpenAiResponseFormatException(response.StatusCode, null, "Failed to deserialize response body.", resolvedRequestUri, ex);
+                            }
+                        }
+                    }
+
+                    try
+                    {
+                        return await JsonSerializer.DeserializeAsync<TResult>(stream, _responseSerializerOptions, requestCts.Token).ConfigureAwait(false);
+                    }
+                    catch (JsonException ex)
+                    {
+                        throw new OpenAiResponseFormatException(response.StatusCode, null, "Failed to deserialize response body.", resolvedRequestUri, ex);
+                    }
+                }
+            }
+            catch (OperationCanceledException ex) when (!cancellationToken.IsCancellationRequested && requestCts.IsCancellationRequested)
+            {
+                throw new OpenAiTimeoutException("The OpenAI request timed out.", ex);
+            }
+        }
+
+        private static bool IsEmptyResponse(HttpResponseMessage response)
+        {
+            if (response.StatusCode == HttpStatusCode.NoContent)
+            {
+                return true;
+            }
+
+            return response.Content == null || response.Content.Headers.ContentLength == 0;
+        }
+
+        private HttpRequestMessage CreateRequest(HttpMethod method, Uri requestUri, HttpContent content, bool acceptJson)
+        {
+            var request = new HttpRequestMessage(method, requestUri);
+            request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", _options.ApiKey);
+            if (acceptJson)
+            {
+                request.Headers.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
+            }
+            request.Content = content;
+            return request;
+        }
+
+        private static void ValidateRequest(HttpMethod method, string resource)
         {
             if (method == null)
             {
@@ -107,33 +222,9 @@ namespace OpenAI.SDK.Logic
             {
                 throw new ArgumentException("Resource path must be relative; absolute URIs are not allowed.", nameof(resource));
             }
-
-            var requestUri = BuildRequestUri(resource);
-            using var request = new HttpRequestMessage(method, requestUri);
-            request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", _options.ApiKey);
-            if (acceptJson)
-            {
-                request.Headers.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
-            }
-            request.Content = content;
-
-            using var client = _clientFactory.CreateClient(ConfigurationExtensions.HttpClientName);
-            using var requestCts = CreateRequestCancellationTokenSource(cancellationToken);
-            using var response = await client.SendAsync(request, HttpCompletionOption.ResponseHeadersRead, requestCts.Token).ConfigureAwait(false);
-
-            // Buffer the body once: the response stream cannot be read twice, so error bodies and
-            // deserialization failures must reuse the same bytes.
-            var responseBody = await ReadContentAsync(response.Content, requestCts.Token).ConfigureAwait(false);
-
-            return new RawHttpResponse(
-                response.StatusCode,
-                responseBody,
-                response.RequestMessage != null ? response.RequestMessage.RequestUri : requestUri,
-                response.Headers,
-                response.ReasonPhrase);
         }
 
-        private static async Task<byte[]> ReadContentAsync(HttpContent content, CancellationToken cancellationToken)
+        private static async Task<byte[]> ReadAllBytesAsync(HttpContent content, CancellationToken cancellationToken)
         {
             if (content == null)
             {
@@ -160,31 +251,39 @@ namespace OpenAI.SDK.Logic
             }
         }
 
-        private static T Deserialize<T>(RawHttpResponse response)
+        private static async Task<string> ReadContentAsStringAsync(HttpContent content, CancellationToken cancellationToken, int maxBytes)
         {
-            if (response.Body.Length == 0)
+            if (content == null)
             {
-                return default(T);
+                return null;
             }
 
-            try
+            using (var stream = await content.ReadAsStreamAsync().ConfigureAwait(false))
             {
-                return JsonSerializer.Deserialize<T>(response.Body, _responseSerializerOptions);
-            }
-            catch (JsonException ex)
-            {
-                throw new OpenAiApiException(response.StatusCode, response.BodyText, "Failed to deserialize response body.", response.RequestUri, response.Headers, ex);
-            }
-        }
+                if (stream == null)
+                {
+                    return null;
+                }
 
-        private static void EnsureSuccess(RawHttpResponse response)
-        {
-            if (response.IsSuccessStatusCode)
-            {
-                return;
-            }
+                using (var buffer = new MemoryStream())
+                {
+                    var chunk = new byte[CopyBufferSize];
+                    int read;
+                    long total = 0;
+                    while (total < maxBytes && (read = await stream.ReadAsync(chunk, 0, (int)Math.Min(chunk.Length, maxBytes - total), cancellationToken).ConfigureAwait(false)) > 0)
+                    {
+                        buffer.Write(chunk, 0, read);
+                        total += read;
+                    }
 
-            throw new OpenAiApiException(response.StatusCode, response.BodyText, response.ReasonPhrase, response.RequestUri, response.Headers);
+                    if (buffer.Length == 0)
+                    {
+                        return null;
+                    }
+
+                    return Encoding.UTF8.GetString(buffer.ToArray());
+                }
+            }
         }
 
         private CancellationTokenSource CreateRequestCancellationTokenSource(CancellationToken cancellationToken)
@@ -230,32 +329,6 @@ namespace OpenAI.SDK.Logic
             }
 
             return resolved;
-        }
-
-        private sealed class RawHttpResponse
-        {
-            public RawHttpResponse(System.Net.HttpStatusCode statusCode, byte[] body, Uri requestUri, HttpResponseHeaders headers, string reasonPhrase)
-            {
-                StatusCode = statusCode;
-                Body = body ?? Array.Empty<byte>();
-                RequestUri = requestUri;
-                Headers = headers;
-                ReasonPhrase = reasonPhrase;
-            }
-
-            public System.Net.HttpStatusCode StatusCode { get; }
-
-            public byte[] Body { get; }
-
-            public Uri RequestUri { get; }
-
-            public HttpResponseHeaders Headers { get; }
-
-            public string ReasonPhrase { get; }
-
-            public bool IsSuccessStatusCode => (int)StatusCode >= 200 && (int)StatusCode <= 299;
-
-            public string BodyText => Body.Length == 0 ? null : Encoding.UTF8.GetString(Body);
         }
     }
 }

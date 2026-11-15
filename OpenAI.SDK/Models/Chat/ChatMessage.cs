@@ -51,6 +51,24 @@ namespace OpenAI.SDK.Models.Chat
         public ChatFunctionCall FunctionCall { get; set; }
 
         /// <summary>
+        /// Refusal message returned by the model, when present.
+        /// </summary>
+        [JsonPropertyName("refusal")]
+        public string Refusal { get; set; }
+
+        /// <summary>
+        /// Annotations attached to the message content, when present.
+        /// </summary>
+        [JsonPropertyName("annotations")]
+        public object Annotations { get; set; }
+
+        /// <summary>
+        /// Audio content associated with the message, when present.
+        /// </summary>
+        [JsonPropertyName("audio")]
+        public object Audio { get; set; }
+
+        /// <summary>
         /// Returns <see cref="Content"/> as text when it is a string or a JSON string element;
         /// returns <c>null</c> for multi-part content.
         /// </summary>
