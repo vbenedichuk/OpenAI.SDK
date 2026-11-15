@@ -260,7 +260,7 @@ public class HttpRequestTests
     public async Task CreateImageEditAsync_IncludesModelWhenProvided()
     {
         string? requestBody = null;
-        StubHttpMessageHandler handler = null;
+        StubHttpMessageHandler handler = null!;
         handler = new StubHttpMessageHandler(request =>
         {
             requestBody = request.Content!.ReadAsStringAsync().GetAwaiter().GetResult();
@@ -322,11 +322,11 @@ public class HttpRequestTests
     [Fact]
     public async Task ChatApi_SendsExpectedRequestShape()
     {
-        string requestBody = null;
-        StubHttpMessageHandler handler = null;
+        string? requestBody = null;
+        StubHttpMessageHandler handler = null!;
         handler = new StubHttpMessageHandler(request =>
         {
-            requestBody = request.Content.ReadAsStringAsync().GetAwaiter().GetResult();
+            requestBody = request.Content!.ReadAsStringAsync().GetAwaiter().GetResult();
             return JsonResponse(ChatCompletionJson);
         });
         using var provider = CreateProvider(handler);
@@ -345,7 +345,7 @@ public class HttpRequestTests
         Assert.Equal("Bearer", request.Headers.Authorization.Scheme);
         Assert.Equal("test-key", request.Headers.Authorization.Parameter);
         Assert.NotNull(request.Content);
-        Assert.Equal("application/json", request.Content.Headers.ContentType.MediaType);
+        Assert.Equal("application/json", request.Content!.Headers.ContentType!.MediaType);
 
         Assert.NotNull(requestBody);
         using var document = JsonDocument.Parse(requestBody);
