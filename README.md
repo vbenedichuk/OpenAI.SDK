@@ -137,11 +137,16 @@ var result = await imagesApi.CreateImageAsync(new CreateImageRequest
 }, CancellationToken.None);
 ```
 
-For image edits, pass `model` to `CreateImageEditAsync`:
+For image edits, pass `model` and the optional `quality`, `outputFormat` and `background` settings:
 
 ```csharp
-await imagesApi.CreateImageEditAsync(image, "img.png", "a prompt", model: "gpt-image-2", cancellationToken: CancellationToken.None);
+await imagesApi.CreateImageEditAsync(
+    image, "img.png", "a prompt",
+    model: "gpt-image-2", quality: "high", outputFormat: "png", background: "transparent",
+    cancellationToken: CancellationToken.None);
 ```
+
+When a mask is supplied without `maskFileName`, the SDK uses `mask.png`.
 
 Set `Model` explicitly for current GPT image models. When omitted, the request falls back to legacy DALL·E 2 behaviour.
 
@@ -203,7 +208,7 @@ The full changelog lives in `RELEASE_NOTES.md` in the repository (it is not pack
 
 ## Version history
 
-- **2.0.0** — `CancellationToken` support on all API methods; obsolete overloads without a token; modern chat DTOs (tools, structured output, multimodal content, `max_completion_tokens`); configurable timeout and named `HttpClient`; input validation; robust HTTP handling (empty bodies, URL escaping, `ConfigureAwait(false)`); improved exception details; image model selection; updated README.
+- **2.0.0** - `CancellationToken` support on all API methods; obsolete overloads without a token; modern chat DTOs (tools, structured output, multimodal content, typed logprobs/annotations/audio, `max_completion_tokens`); configurable timeout (honoured end-to-end) and named `HttpClient`; input validation; robust HTTP handling (streamed JSON, empty bodies, 64 KB error-body cap, URL escaping, `ConfigureAwait(false)`); dedicated `OpenAiResponseFormatException`/`OpenAiTimeoutException` with request context; richer DTOs (file status details, image usage, token details); image model/quality/output format/background for generation and editing; updated README.
 - **1.4.0** — Fixed file content download, moderation results, fine-tune file deserialization, DI registrations, logprobs mapping, base URL normalization, and streaming validation.
 - **1.3** — Embeddings API call fixed.
 - **1.2** — Code cleanup and renamings.

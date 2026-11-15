@@ -67,6 +67,7 @@
 - Large non-2xx bodies are read only up to 64 KB instead of being fully buffered.
 - `CreateImageEditAsync` no longer throws `ArgumentNullException` when a mask is supplied without `maskFileName`; the file name defaults to `mask.png`.
 - The sample project is no longer packable, so `dotnet pack OpenAI.sln` does not produce a stray `OpenAI.SDK.SampleConsoleApp` package.
+- The sample now reports `OpenAiTimeoutException`/`OpenAiResponseFormatException` through `OpenAiException` (instead of letting them escape) and falls back to `OPENAI_API_KEY` when the user-secrets value is whitespace.
 - `FineTunesApi.ListFineTuneEventsAsync` no longer silently ignores `stream`.
 - `ModerationsApi` rejects null/empty input and the ambiguous `CreateModeration(null)` overload.
 - ID/path segments are escaped, `.`/`..` segments and resources escaping the base URL are rejected.
@@ -89,8 +90,8 @@
 
 ### Tests
 
-- 59 tests, all passing.
-- New coverage: configuration validation (missing key, invalid/non-HTTP base URL), default base URL, image model serialization and `model`/`quality`/`output_format`/`background` propagation in multipart edits, mask filename defaulting, `BaseApi` error path with the 64 KB body cap, request shape (method, auth, content type, null omission), empty bodies with and without `Content-Length`, malformed JSON wrapping for JSON and multipart requests, `RequestUri`/`RetryAfter`/body truncation, URL escaping and path-traversal rejection, timeout enforcement during header wait and body read (including request context and oversized timeouts), cancellation propagation (deterministic, no sleeps), `ChatMessage.Content` string/multi-part round-trip, and typed deserialization of file status details, image usage, logprobs, annotations, audio, refusal, token details and model/image metadata.
+- 81 tests, all passing.
+- New coverage: configuration validation (missing key, invalid/non-HTTP base URL), default base URL, image model serialization and `model`/`quality`/`output_format`/`background` propagation in multipart edits, mask filename defaulting, `BaseApi` error path with the 64 KB body cap, request shape (method, auth, content type, null omission), empty bodies with and without `Content-Length`, malformed JSON wrapping for JSON and multipart requests, `RequestUri`/`RetryAfter`/body truncation, URL escaping and path-traversal rejection, timeout enforcement during header wait and body read (including request context and oversized timeouts), cancellation propagation (deterministic, no sleeps), `ChatMessage.Content` string/multi-part round-trip, typed deserialization of file status details, image usage, logprobs, annotations, audio, refusal, token details and model/image metadata, request-shape/validation coverage for embeddings, moderations, models, file listing/deletion and image generation, and the sample's exception report for API, format and timeout failures.
 
 ### Commits
 

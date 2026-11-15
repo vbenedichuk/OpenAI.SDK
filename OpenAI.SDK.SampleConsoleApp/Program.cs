@@ -16,8 +16,11 @@ namespace OpenAI.SDK.SampleConsoleApp
                 .AddUserSecrets<Program>()
                 .Build();
 
-            var apiKey = configuration["OpenAI:Api:ApiKey"]
-                ?? Environment.GetEnvironmentVariable("OPENAI_API_KEY");
+            var apiKey = configuration["OpenAI:Api:ApiKey"];
+            if (string.IsNullOrWhiteSpace(apiKey))
+            {
+                apiKey = Environment.GetEnvironmentVariable("OPENAI_API_KEY");
+            }
 
             if (string.IsNullOrWhiteSpace(apiKey))
             {
@@ -75,13 +78,11 @@ namespace OpenAI.SDK.SampleConsoleApp
                 Console.WriteLine(JsonSerializer.Serialize(imageResult));
                 Console.WriteLine("------------------------------------------------------");
             }
-            catch (OpenAiApiException ex)
+            catch (OpenAiException ex)
             {
-                Console.Error.WriteLine($"OpenAI API request failed: {(int)ex.StatusCode} {ex.StatusCode}");
-                if (!string.IsNullOrWhiteSpace(ex.ResponseContents))
-                {
-                    Console.Error.WriteLine(ex.ResponseContents);
-                }
+                // Catch the SDK base type so API errors, timeouts and response-format
+                // failures are all reported instead of escaping as an unhandled exception.
+                Console.Error.WriteLine($"OpenAI request failed: {ExceptionReport.ToText(ex)}");
             }
         }
     }

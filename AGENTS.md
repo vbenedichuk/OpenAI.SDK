@@ -13,7 +13,7 @@
 ## Build and test
 - `dotnet build OpenAI.sln` — compiles and packs the NuGet package (`GeneratePackageOnBuild=True`).
 - `dotnet build OpenAI.sln -p:GeneratePackageOnBuild=false` — compile only; useful for quick checks.
-- `dotnet test OpenAI.SDK.Tests/OpenAI.SDK.Tests.csproj` — all tests (44 at the time of writing).
+- `dotnet test OpenAI.SDK.Tests/OpenAI.SDK.Tests.csproj` — all tests (81 at the time of writing).
 - Single test: `dotnet test OpenAI.SDK.Tests/OpenAI.SDK.Tests.csproj --filter "FullyQualifiedName~TestName"`.
 - There is no CI, lint, formatter, or analyzer config; build + tests are the verification bar.
 
@@ -21,7 +21,7 @@
 - The library project pins `LangVersion 8.0`. Do not use C# 9+ features (records, `init`, file-scoped namespaces, raw string literals) in `OpenAI.SDK/`. Tests and the sample use newer defaults.
 - New API: define `IXxxApi` in `Abstractions/`, implement `XxxApi : BaseApi` in `Logic/`, register it in `AddOpenAiApi`, and add DTOs in `Models/` with `[JsonPropertyName]`.
 - Follow the existing pattern: every method has a `CancellationToken` overload; the tokenless overload is `[Obsolete]` and delegates to it.
-- All HTTP goes through `BaseApi`: `ExecuteRequest` (JSON), `ExecuteRawRequestAsync` (bytes) and `ExecuteMultipartRequestAsync` (form data). `BaseApi` normalizes `BaseUrl` (trims trailing `/` then appends `/`), sends Bearer `ApiKey`, ignores null JSON properties, validates/escapes resource paths, and throws `OpenAiApiException` on non-2xx.
+- All HTTP goes through `BaseApi`: `ExecuteRequest` (JSON), `ExecuteRawRequestAsync` (bytes) and `ExecuteMultipartRequestAsync` (form data). `BaseApi` normalizes `BaseUrl` (trims trailing `/` then appends `/`), sends Bearer `ApiKey`, ignores null JSON properties, validates/escapes resource paths, throws `OpenAiApiException` on non-2xx, `OpenAiResponseFormatException` when a 2xx body cannot be deserialized, and `OpenAiTimeoutException` when the configured timeout elapses.
 - Streaming is unsupported. `ChatApi`, `CompletionsApi` and `FineTunesApi.ListFineTuneEventsAsync` throw `NotSupportedException` when the stream flag is set; tests assert the first two.
 - Multipart methods wrap caller streams in `NonDisposingStream`; never dispose caller-owned streams.
 
@@ -34,5 +34,7 @@
 - Keep `System.Text.Json` at 8.0.6+ (CVE-2024-43485) and `xunit` at 2.9.3+ (older versions pull vulnerable NETStandard.Library transitives).
 
 ## Sample gotcha
-- `Program.cs` reads `OpenAI:Api:ApiKey` from user secrets unconditionally, then falls back to the `OPENAI_API_KEY` environment variable, and throws `InvalidOperationException` with setup instructions when neither is set. It also honours `OpenAI:Api:BaseUrl`.
+- `Program.cs` reads `OpenAI:Api:ApiKey` from user secrets, falls back to the `OPENAI_API_KEY` environment variable when that value is null or whitespace, and throws `InvalidOperationException` with setup instructions when neither is set. It also honours `OpenAI:Api:BaseUrl`.
+- The sample catches `OpenAiException` (the SDK base type), so `OpenAiApiException`, `OpenAiResponseFormatException` and `OpenAiTimeoutException` are all reported without an unhandled stack trace.
+- `ExceptionReport.cs` is compiled into both the sample and the test project through a linked `<Compile>` item, so the sample's error formatting stays unit-tested. Keep it dependency-free.
 - The sample references `BlackCircle.png` with `CopyToOutputDirectory=Always`; keep the file next to the project.

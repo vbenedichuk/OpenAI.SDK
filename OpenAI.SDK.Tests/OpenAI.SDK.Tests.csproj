@@ -26,4 +26,8 @@
     <ProjectReference Include="..\OpenAI.SDK\OpenAI.SDK.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <Compile Include="..\OpenAI.SDK.SampleConsoleApp\ExceptionReport.cs" Link="Sample\ExceptionReport.cs" />
+  </ItemGroup>
+
 </Project>
