@@ -10,30 +10,29 @@ namespace OpenAI.SDK.SampleConsoleApp
 {
     internal class Program
     {
-        static async Task Main(string[] args)
+        static async Task<int> Main(string[] args)
         {
             var configuration = new ConfigurationBuilder()
                 .AddUserSecrets<Program>()
+                .AddEnvironmentVariables()
                 .Build();
 
-            var apiKey = configuration["OpenAI:Api:ApiKey"];
-            if (string.IsNullOrWhiteSpace(apiKey))
-            {
-                apiKey = Environment.GetEnvironmentVariable("OPENAI_API_KEY");
-            }
+            var options = SampleConfiguration.Load(configuration, Environment.GetEnvironmentVariable);
 
-            if (string.IsNullOrWhiteSpace(apiKey))
+            if (string.IsNullOrWhiteSpace(options.ApiKey))
             {
-                throw new InvalidOperationException(
+                Console.Error.WriteLine(
                     "OpenAI API key is not configured. Set it with 'dotnet user-secrets set \"OpenAI:Api:ApiKey\" \"YOUR_KEY\"' " +
                     "or provide the OPENAI_API_KEY environment variable.");
+                return 1;
             }
 
             var services = new ServiceCollection();
-            services.Configure<OpenAiOptions>(options =>
+            services.Configure<OpenAiOptions>(configured =>
             {
-                options.ApiKey = apiKey;
-                options.BaseUrl = configuration["OpenAI:Api:BaseUrl"] ?? "https://api.openai.com/v1/";
+                configured.ApiKey = options.ApiKey;
+                configured.BaseUrl = options.BaseUrl;
+                configured.Timeout = options.Timeout;
             });
             services.AddOpenAiApi();
 
@@ -92,7 +91,10 @@ namespace OpenAI.SDK.SampleConsoleApp
                 // Catch the SDK base type so API errors, timeouts and response-format
                 // failures are all reported instead of escaping as an unhandled exception.
                 Console.Error.WriteLine($"OpenAI request failed: {ExceptionReport.ToText(ex)}");
+                return 1;
             }
+
+            return 0;
         }
     }
 }

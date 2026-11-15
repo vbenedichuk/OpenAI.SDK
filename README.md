@@ -195,12 +195,12 @@ The test suite uses local HTTP stubs and never calls the OpenAI API. Running `do
 `OpenAI.SDK.SampleConsoleApp` demonstrates embeddings, models, chat and image generation.
 
 1. Obtain an API key from OpenAI.
-2. Configure the key (either option works):
+2. Configure the key (any option works):
    - User secrets: `dotnet user-secrets set "OpenAI:Api:ApiKey" "YOUR_KEY_HERE"` (run from `OpenAI.SDK.SampleConsoleApp`)
-   - Environment variable: set `OPENAI_API_KEY`
+   - Environment variable: set `OPENAI_API_KEY`, or `OpenAI__Api__ApiKey` for the standard nested configuration key
 3. Run: `dotnet run --project OpenAI.SDK.SampleConsoleApp`
 
-You can also override the base URL with `OpenAI:Api:BaseUrl`. If the API key is missing, the sample fails fast with a clear `InvalidOperationException`.
+You can also override the base URL with `OpenAI:Api:BaseUrl` (environment: `OpenAI__Api__BaseUrl`) and the request timeout with `OpenAI:Api:Timeout`. If the API key is missing, the sample prints setup instructions and exits with a non-zero code.
 
 ## Release notes
 
