@@ -81,11 +81,12 @@ namespace OpenAI.SDK.Logic
             using var request = CreateRequest(method, requestUri, null, false);
             using var client = _clientFactory.CreateClient(ConfigurationExtensions.HttpClientName);
             using var requestCts = CreateRequestCancellationTokenSource(cancellationToken);
+            var resolvedRequestUri = requestUri;
 
             try
             {
                 using var response = await client.SendAsync(request, HttpCompletionOption.ResponseHeadersRead, requestCts.Token).ConfigureAwait(false);
-                var resolvedRequestUri = response.RequestMessage != null ? response.RequestMessage.RequestUri : requestUri;
+                resolvedRequestUri = response.RequestMessage != null ? response.RequestMessage.RequestUri : requestUri;
 
                 if (!response.IsSuccessStatusCode)
                 {
@@ -97,7 +98,7 @@ namespace OpenAI.SDK.Logic
             }
             catch (OperationCanceledException ex) when (!cancellationToken.IsCancellationRequested && requestCts.IsCancellationRequested)
             {
-                throw new OpenAiTimeoutException("The OpenAI request timed out.", ex);
+                throw new OpenAiTimeoutException(resolvedRequestUri, _options.Timeout, ex);
             }
         }
 
@@ -118,11 +119,12 @@ namespace OpenAI.SDK.Logic
             using var request = CreateRequest(method, requestUri, content, true);
             using var client = _clientFactory.CreateClient(ConfigurationExtensions.HttpClientName);
             using var requestCts = CreateRequestCancellationTokenSource(cancellationToken);
+            var resolvedRequestUri = requestUri;
 
             try
             {
                 using var response = await client.SendAsync(request, HttpCompletionOption.ResponseHeadersRead, requestCts.Token).ConfigureAwait(false);
-                var resolvedRequestUri = response.RequestMessage != null ? response.RequestMessage.RequestUri : requestUri;
+                resolvedRequestUri = response.RequestMessage != null ? response.RequestMessage.RequestUri : requestUri;
 
                 if (!response.IsSuccessStatusCode)
                 {
@@ -165,24 +167,28 @@ namespace OpenAI.SDK.Logic
                             }
                             catch (JsonException ex)
                             {
-                                throw new OpenAiResponseFormatException(response.StatusCode, null, "Failed to deserialize response body.", resolvedRequestUri, ex);
+                                var body = GetCapturedText(buffer, ErrorBodyLimit);
+                                throw new OpenAiResponseFormatException(response.StatusCode, body, "Failed to deserialize response body.", resolvedRequestUri, ex);
                             }
                         }
                     }
 
-                    try
+                    using (var captured = new CapturingStream(stream, ErrorBodyLimit))
                     {
-                        return await JsonSerializer.DeserializeAsync<TResult>(stream, _responseSerializerOptions, requestCts.Token).ConfigureAwait(false);
-                    }
-                    catch (JsonException ex)
-                    {
-                        throw new OpenAiResponseFormatException(response.StatusCode, null, "Failed to deserialize response body.", resolvedRequestUri, ex);
+                        try
+                        {
+                            return await JsonSerializer.DeserializeAsync<TResult>(captured, _responseSerializerOptions, requestCts.Token).ConfigureAwait(false);
+                        }
+                        catch (JsonException ex)
+                        {
+                            throw new OpenAiResponseFormatException(response.StatusCode, captured.CapturedText, "Failed to deserialize response body.", resolvedRequestUri, ex);
+                        }
                     }
                 }
             }
             catch (OperationCanceledException ex) when (!cancellationToken.IsCancellationRequested && requestCts.IsCancellationRequested)
             {
-                throw new OpenAiTimeoutException("The OpenAI request timed out.", ex);
+                throw new OpenAiTimeoutException(resolvedRequestUri, _options.Timeout, ex);
             }
         }
 
@@ -251,6 +257,17 @@ namespace OpenAI.SDK.Logic
             }
         }
 
+        private static string GetCapturedText(MemoryStream buffer, int maxBytes)
+        {
+            if (buffer.Length == 0)
+            {
+                return null;
+            }
+
+            var length = (int)Math.Min(buffer.Length, maxBytes);
+            return Encoding.UTF8.GetString(buffer.GetBuffer(), 0, length);
+        }
+
         private static async Task<string> ReadContentAsStringAsync(HttpContent content, CancellationToken cancellationToken, int maxBytes)
         {
             if (content == null)
@@ -289,9 +306,15 @@ namespace OpenAI.SDK.Logic
         private CancellationTokenSource CreateRequestCancellationTokenSource(CancellationToken cancellationToken)
         {
             var requestCts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
-            if (_options.Timeout > TimeSpan.Zero)
+            var timeout = _options.Timeout;
+            if (timeout > TimeSpan.Zero)
             {
-                requestCts.CancelAfter(_options.Timeout);
+                // CancelAfter rejects delays above the platform timer maximum; clamp instead of throwing.
+                if (timeout.TotalMilliseconds > int.MaxValue)
+                {
+                    timeout = TimeSpan.FromMilliseconds(int.MaxValue);
+                }
+                requestCts.CancelAfter(timeout);
             }
             return requestCts;
         }
@@ -329,6 +352,82 @@ namespace OpenAI.SDK.Logic
             }
 
             return resolved;
+        }
+
+        private sealed class CapturingStream : Stream
+        {
+            private readonly Stream _inner;
+            private readonly MemoryStream _capture = new MemoryStream();
+            private readonly int _limit;
+
+            public CapturingStream(Stream inner, int limit)
+            {
+                _inner = inner ?? throw new ArgumentNullException(nameof(inner));
+                _limit = limit;
+            }
+
+            public string CapturedText => GetCapturedText(_capture, _limit);
+
+            public override bool CanRead => _inner.CanRead;
+
+            public override bool CanSeek => _inner.CanSeek;
+
+            public override bool CanWrite => false;
+
+            public override long Length => _inner.Length;
+
+            public override long Position
+            {
+                get => _inner.Position;
+                set => _inner.Position = value;
+            }
+
+            public override void Flush() => _inner.Flush();
+
+            public override int Read(byte[] buffer, int offset, int count)
+            {
+                var read = _inner.Read(buffer, offset, count);
+                Capture(buffer, offset, read);
+                return read;
+            }
+
+            public override async Task<int> ReadAsync(byte[] buffer, int offset, int count, CancellationToken cancellationToken)
+            {
+                var read = await _inner.ReadAsync(buffer, offset, count, cancellationToken).ConfigureAwait(false);
+                Capture(buffer, offset, read);
+                return read;
+            }
+
+            public override long Seek(long offset, SeekOrigin origin) => _inner.Seek(offset, origin);
+
+            public override void SetLength(long value) => throw new NotSupportedException();
+
+            public override void Write(byte[] buffer, int offset, int count) => throw new NotSupportedException();
+
+            protected override void Dispose(bool disposing)
+            {
+                if (disposing)
+                {
+                    _capture.Dispose();
+                }
+                base.Dispose(disposing);
+            }
+
+            private void Capture(byte[] buffer, int offset, int count)
+            {
+                if (count <= 0)
+                {
+                    return;
+                }
+
+                var remaining = _limit - (int)_capture.Length;
+                if (remaining <= 0)
+                {
+                    return;
+                }
+
+                _capture.Write(buffer, offset, Math.Min(count, remaining));
+            }
         }
     }
 }

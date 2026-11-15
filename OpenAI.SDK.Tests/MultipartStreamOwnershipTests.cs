@@ -58,6 +58,62 @@ public class MultipartStreamOwnershipTests
         Assert.Contains("a prompt", handler.RequestBody);
     }
 
+    [Fact]
+    public async Task CreateImageEditAsync_DefaultsMaskFileNameWhenOmitted()
+    {
+        var handler = new StubHttpMessageHandler(ImageResponseJson);
+        using var provider = CreateProvider(handler);
+        var imagesApi = provider.GetRequiredService<IImagesApi>();
+        using var image = new MemoryStream(new byte[] { 1, 2, 3 });
+        using var mask = new MemoryStream(new byte[] { 4, 5, 6 });
+
+        await imagesApi.CreateImageEditAsync(image, "img.png", "a prompt", mask: mask, cancellationToken: CancellationToken.None);
+
+        Assert.Contains("name=mask", handler.RequestBody);
+        Assert.Contains("filename=mask.png", handler.RequestBody);
+    }
+
+    [Fact]
+    public async Task CreateImageEditAsync_IncludesQualityOutputFormatAndBackground()
+    {
+        string? quality = null;
+        string? outputFormat = null;
+        string? background = null;
+        var handler = new FuncStubHttpMessageHandler(request =>
+        {
+            var form = Assert.IsType<MultipartFormDataContent>(request.Content);
+            foreach (var part in form)
+            {
+                var name = part.Headers.ContentDisposition?.Name?.Trim('"');
+                if (name == "quality")
+                {
+                    quality = part.ReadAsStringAsync().GetAwaiter().GetResult();
+                }
+                else if (name == "output_format")
+                {
+                    outputFormat = part.ReadAsStringAsync().GetAwaiter().GetResult();
+                }
+                else if (name == "background")
+                {
+                    background = part.ReadAsStringAsync().GetAwaiter().GetResult();
+                }
+            }
+            return new HttpResponseMessage(HttpStatusCode.OK)
+            {
+                Content = new StringContent(ImageResponseJson, Encoding.UTF8, "application/json")
+            };
+        });
+        using var provider = CreateProvider(handler);
+        var imagesApi = provider.GetRequiredService<IImagesApi>();
+        using var image = new MemoryStream(new byte[] { 1, 2, 3 });
+
+        await imagesApi.CreateImageEditAsync(image, "img.png", "a prompt", quality: "high", outputFormat: "png", background: "transparent", cancellationToken: CancellationToken.None);
+
+        Assert.Equal("high", quality);
+        Assert.Equal("png", outputFormat);
+        Assert.Equal("transparent", background);
+    }
+
 #pragma warning disable CS0618 // Retired API must keep working for backward compatibility.
     [Fact]
     public async Task CreateImageVariationAsync_DoesNotDisposeCallerStream()
@@ -95,6 +151,21 @@ public class MultipartStreamOwnershipTests
         public StubHttpClientFactory(HttpMessageHandler handler) => _handler = handler;
 
         public HttpClient CreateClient(string name) => new(_handler, disposeHandler: false);
+    }
+
+    private sealed class FuncStubHttpMessageHandler : HttpMessageHandler
+    {
+        private readonly Func<HttpRequestMessage, HttpResponseMessage> _responder;
+
+        public FuncStubHttpMessageHandler(Func<HttpRequestMessage, HttpResponseMessage> responder) => _responder = responder;
+
+        public List<HttpRequestMessage> Requests { get; } = new();
+
+        protected override Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken)
+        {
+            Requests.Add(request);
+            return Task.FromResult(_responder(request));
+        }
     }
 
     private sealed class StubHttpMessageHandler : HttpMessageHandler

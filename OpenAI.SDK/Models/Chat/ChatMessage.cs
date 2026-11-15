@@ -60,13 +60,13 @@ namespace OpenAI.SDK.Models.Chat
         /// Annotations attached to the message content, when present.
         /// </summary>
         [JsonPropertyName("annotations")]
-        public object Annotations { get; set; }
+        public List<ChatAnnotation> Annotations { get; set; }
 
         /// <summary>
         /// Audio content associated with the message, when present.
         /// </summary>
         [JsonPropertyName("audio")]
-        public object Audio { get; set; }
+        public ChatMessageAudio Audio { get; set; }
 
         /// <summary>
         /// Returns <see cref="Content"/> as text when it is a string or a JSON string element;

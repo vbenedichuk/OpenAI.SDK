@@ -65,6 +65,42 @@ public class HttpRequestTests
     }
 
     [Fact]
+    public async Task RetrieveFileContentAsync_TruncatesLargeErrorBodyTo64KB()
+    {
+        var handler = new StubHttpMessageHandler(_ => new HttpResponseMessage(HttpStatusCode.BadRequest)
+        {
+            Content = new StringContent(new string('x', 100_000), Encoding.UTF8, "application/json")
+        });
+        using var provider = CreateProvider(handler);
+
+        var filesApi = provider.GetRequiredService<IFilesApi>();
+
+        var exception = await Assert.ThrowsAsync<OpenAiApiException>(() => filesApi.RetrieveFileContentAsync("file-1", CancellationToken.None));
+        Assert.Equal(HttpStatusCode.BadRequest, exception.StatusCode);
+        Assert.Equal(65536, exception.ResponseContents.Length);
+    }
+
+    [Fact]
+    public async Task CreateImageEditAsync_WrapsMalformedJsonInResponseFormatException()
+    {
+        const string malformed = "{not-json";
+        var handler = new StubHttpMessageHandler(_ => new HttpResponseMessage(HttpStatusCode.OK)
+        {
+            Content = new StringContent(malformed, Encoding.UTF8, "application/json")
+        });
+        using var provider = CreateProvider(handler);
+
+        var imagesApi = provider.GetRequiredService<IImagesApi>();
+        using var image = new MemoryStream(new byte[] { 1, 2, 3 });
+        var exception = await Assert.ThrowsAsync<OpenAiResponseFormatException>(() => imagesApi.CreateImageEditAsync(image, "img.png", "a prompt", cancellationToken: CancellationToken.None));
+
+        Assert.Equal(malformed, exception.ResponseContents);
+        Assert.Equal(HttpStatusCode.OK, exception.StatusCode);
+        Assert.IsType<JsonException>(exception.InnerException);
+        Assert.EndsWith("/v1/images/edits", exception.RequestUri!.AbsoluteUri);
+    }
+
+    [Fact]
     public async Task ChatApi_NormalizesBaseUrlWithoutTrailingSlash()
     {
         var handler = new StubHttpMessageHandler(_ => JsonResponse(ChatCompletionJson));
@@ -407,6 +443,7 @@ public class HttpRequestTests
         }, CancellationToken.None));
 
         Assert.IsType<JsonException>(exception.InnerException);
+        Assert.Equal(malformed, exception.ResponseContents);
         Assert.Equal(HttpStatusCode.OK, exception.StatusCode);
         Assert.Contains("Failed to deserialize", exception.Message);
         Assert.EndsWith("/v1/chat/completions", exception.RequestUri!.AbsoluteUri);
@@ -431,6 +468,46 @@ public class HttpRequestTests
 
         Assert.False(callerCts.IsCancellationRequested);
         Assert.True(handler.ReadToken.IsCancellationRequested);
+    }
+
+    [Fact]
+    public async Task ChatApi_TimeoutExceptionIncludesRequestContext()
+    {
+        var handler = new BlockingBodyHandler();
+        using var provider = CreateProvider(handler, timeout: TimeSpan.FromMilliseconds(100));
+        using var callerCts = new CancellationTokenSource();
+
+        var chatApi = provider.GetRequiredService<IChatApi>();
+        var task = chatApi.CreateCompletionAsync(new ApiChatCompletionRequest
+        {
+            Model = "gpt-3.5-turbo",
+            Messages = new List<ChatMessage> { new() { Role = "user", Content = "hi" } }
+        }, callerCts.Token);
+
+        await handler.ReadEntered.WaitAsync(TimeSpan.FromSeconds(5));
+        var exception = await Assert.ThrowsAsync<OpenAiTimeoutException>(() => task);
+
+        Assert.Equal(TimeSpan.FromMilliseconds(100), exception.Timeout);
+        Assert.NotNull(exception.RequestUri);
+        Assert.EndsWith("/v1/chat/completions", exception.RequestUri!.AbsoluteUri);
+        Assert.Contains("/v1/chat/completions", exception.Message);
+    }
+
+    [Fact]
+    public async Task ChatApi_AcceptsTimeoutLongerThanCancelAfterMaximum()
+    {
+        var handler = new StubHttpMessageHandler(_ => JsonResponse(ChatCompletionJson));
+        using var provider = CreateProvider(handler, timeout: TimeSpan.FromDays(50));
+
+        var chatApi = provider.GetRequiredService<IChatApi>();
+        var result = await chatApi.CreateCompletionAsync(new ApiChatCompletionRequest
+        {
+            Model = "gpt-3.5-turbo",
+            Messages = new List<ChatMessage> { new() { Role = "user", Content = "hi" } }
+        }, CancellationToken.None);
+
+        Assert.NotNull(result);
+        Assert.Equal("chatcmpl-1", result.Id);
     }
 
     [Fact]

@@ -1,8 +1,11 @@
 using System.Text.Json;
+using OpenAI.SDK.Models;
 using OpenAI.SDK.Models.Completions;
+using OpenAI.SDK.Models.Files;
 using OpenAI.SDK.Models.FineTunes;
+using OpenAI.SDK.Models.CreateImage;
 using OpenAI.SDK.Models.Moderations;
-
+using OpenAI.SDK.Models.Chat;
 namespace OpenAI.SDK.Tests;
 
 public class ModelSerializationTests
@@ -171,5 +174,158 @@ public class ModelSerializationTests
         using var document = JsonDocument.Parse(serialized);
         Assert.Equal("hi", document.RootElement.GetProperty("content").GetString());
         Assert.False(document.RootElement.TryGetProperty("ContentText", out _));
+    }
+
+    [Fact]
+    public void FileDetails_DeserializesStatusDetailsObject()
+    {
+        const string json = """
+            {
+              "id": "file-1",
+              "object": "file",
+              "bytes": 3,
+              "created_at": 1,
+              "filename": "test.txt",
+              "purpose": "fine-tune",
+              "status": "error",
+              "status_details": { "code": "invalid_format", "message": "Training file is not valid JSONL" }
+            }
+            """;
+
+        var fileDetails = JsonSerializer.Deserialize<FileDetails>(json);
+
+        Assert.NotNull(fileDetails);
+        Assert.Equal("file-1", fileDetails.Id);
+        Assert.Equal("error", fileDetails.Status);
+        Assert.NotNull(fileDetails.StatusDetails);
+        Assert.Equal("invalid_format", fileDetails.StatusDetails.Code);
+        Assert.Equal("Training file is not valid JSONL", fileDetails.StatusDetails.Message);
+    }
+
+    [Fact]
+    public void CreateImageResponse_DeserializesImageUsage()
+    {
+        const string json = """
+            {
+              "created": 1,
+              "data": [],
+              "usage": { "total_tokens": 100, "input_tokens": 60, "output_tokens": 40, "input_tokens_details": { "text_tokens": 10, "image_tokens": 50 } }
+            }
+            """;
+
+        var response = JsonSerializer.Deserialize<CreateImageResponse>(json);
+
+        Assert.NotNull(response);
+        Assert.Equal(100, response.Usage.TotalTokens);
+        Assert.Equal(60, response.Usage.InputTokens);
+        Assert.Equal(40, response.Usage.OutputTokens);
+        Assert.Equal(10, response.Usage.InputTokensDetails.TextTokens);
+        Assert.Equal(50, response.Usage.InputTokensDetails.ImageTokens);
+    }
+
+    [Fact]
+    public void ChatCompletionChoice_DeserializesTypedLogprobs()
+    {
+        const string json = """
+            { "index": 0, "message": { "role": "assistant", "content": "hi" }, "finish_reason": "stop", "logprobs": { "content": [ { "token": "hi", "logprob": -0.25, "bytes": [104, 105], "top_logprobs": [ { "token": "hi", "logprob": -0.25, "bytes": [104, 105] } ] } ], "refusal": null } }
+            """;
+
+        var choice = JsonSerializer.Deserialize<ChatCompletionChoice>(json);
+
+        Assert.NotNull(choice);
+        Assert.NotNull(choice.Logprobs);
+        Assert.Single(choice.Logprobs.Content);
+        var entry = choice.Logprobs.Content[0];
+        Assert.Equal("hi", entry.Token);
+        Assert.Equal(-0.25, entry.Logprob);
+        Assert.Equal(new[] { 104, 105 }, entry.Bytes);
+        Assert.Single(entry.TopLogprobs);
+        Assert.Equal("hi", entry.TopLogprobs[0].Token);
+        Assert.Equal(-0.25, entry.TopLogprobs[0].Logprob);
+    }
+
+    [Fact]
+    public void ChatMessage_DeserializesTypedAnnotations()
+    {
+        const string json = """
+            { "role": "assistant", "content": "see source", "annotations": [ { "type": "url_citation", "url_citation": { "start_index": 0, "end_index": 10, "title": "Example", "url": "https://example.com" } } ] }
+            """;
+
+        var message = JsonSerializer.Deserialize<ChatMessage>(json);
+
+        Assert.NotNull(message);
+        Assert.Single(message.Annotations);
+        var annotation = message.Annotations[0];
+        Assert.Equal("url_citation", annotation.Type);
+        Assert.Equal("Example", annotation.UrlCitation.Title);
+        Assert.Equal("https://example.com", annotation.UrlCitation.Url);
+        Assert.Equal(0, annotation.UrlCitation.StartIndex);
+        Assert.Equal(10, annotation.UrlCitation.EndIndex);
+    }
+
+    [Fact]
+    public void ChatMessage_DeserializesTypedAudio()
+    {
+        const string json = """
+            { "role": "assistant", "content": "spoken", "audio": { "id": "audio_1", "expires_at": 1234567890, "data": "QUJD", "transcript": "spoken text" } }
+            """;
+
+        var message = JsonSerializer.Deserialize<ChatMessage>(json);
+
+        Assert.NotNull(message);
+        Assert.Equal("audio_1", message.Audio.Id);
+        Assert.Equal(1234567890L, message.Audio.ExpiresAt);
+        Assert.Equal("QUJD", message.Audio.Data);
+        Assert.Equal("spoken text", message.Audio.Transcript);
+    }
+
+    [Fact]
+    public void CreateImageResponseData_DeserializesRevisedPrompt()
+    {
+        const string json = """{ "url": "https://example.com/a.png", "revised_prompt": "a calmer version" }""";
+
+        var data = JsonSerializer.Deserialize<CreateImageResponseData>(json);
+
+        Assert.NotNull(data);
+        Assert.Equal("https://example.com/a.png", data.Url);
+        Assert.Equal("a calmer version", data.RevisedPrompt);
+    }
+
+    [Fact]
+    public void ApiModel_DeserializesCreated()
+    {
+        const string json = """{ "id": "gpt-4o", "object": "model", "created": 1700000000, "owned_by": "openai" }""";
+
+        var model = JsonSerializer.Deserialize<ApiModel>(json);
+
+        Assert.NotNull(model);
+        Assert.Equal("gpt-4o", model.Id);
+        Assert.Equal("openai", model.OwnedBy);
+        Assert.Equal(1700000000L, model.Created);
+    }
+
+    [Fact]
+    public void ModelUsage_DeserializesTokenDetails()
+    {
+        const string json = """{ "prompt_tokens": 10, "completion_tokens": 20, "total_tokens": 30, "prompt_tokens_details": { "cached_tokens": 4, "audio_tokens": 2 }, "completion_tokens_details": { "reasoning_tokens": 7, "audio_tokens": 1 } }""";
+
+        var usage = JsonSerializer.Deserialize<ModelUsage>(json);
+
+        Assert.NotNull(usage);
+        Assert.Equal(4, usage.PromptTokensDetails.CachedTokens);
+        Assert.Equal(2, usage.PromptTokensDetails.AudioTokens);
+        Assert.Equal(7, usage.CompletionTokensDetails.ReasoningTokens);
+        Assert.Equal(1, usage.CompletionTokensDetails.AudioTokens);
+    }
+
+    [Fact]
+    public void ChatMessage_DeserializesRefusal()
+    {
+        const string json = """{ "role": "assistant", "content": null, "refusal": "I cannot help with that." }""";
+
+        var message = JsonSerializer.Deserialize<ChatMessage>(json);
+
+        Assert.NotNull(message);
+        Assert.Equal("I cannot help with that.", message.Refusal);
     }
 }

@@ -10,7 +10,7 @@ namespace OpenAI.SDK.Models.CreateImage
         [JsonPropertyName("data")]
         public List<CreateImageResponseData> Data { get; set; }
         [JsonPropertyName("usage")]
-        public ModelUsage Usage { get; set; }
+        public ImageUsage Usage { get; set; }
         [JsonPropertyName("size")]
         public string Size { get; set; }
         [JsonPropertyName("quality")]

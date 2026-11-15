@@ -166,7 +166,7 @@ catch (OpenAiApiException ex)
 }
 ```
 
-`OpenAiApiException` exposes `StatusCode`, `ResponseContents`, `RequestUri`, `ResponseHeaders` and `RetryAfter`. Its `Message` contains the status code, request URI and a truncated (up to 1024 characters) response body. A successful response body that cannot be deserialized into the expected DTO throws `OpenAiResponseFormatException` with the original `JsonException` in `InnerException`; transport failures surface as `HttpRequestException`, caller cancellation as `OperationCanceledException`/`TaskCanceledException`, and a configured request timeout as `OpenAiTimeoutException`. A successful response with an empty body (for example `204 No Content`) returns `default` instead of throwing.
+`OpenAiApiException` exposes `StatusCode`, `ResponseContents`, `RequestUri`, `ResponseHeaders` and `RetryAfter`. `ResponseContents` contains the raw response body or, for large error responses, its first 64 KB. Its `Message` contains the status code, request URI and a truncated (up to 1024 characters) response body. A successful response body that cannot be deserialized into the expected DTO throws `OpenAiResponseFormatException` (with the captured body prefix, status code and request URI) and the original `JsonException` in `InnerException`; transport failures surface as `HttpRequestException`, caller cancellation as `OperationCanceledException`/`TaskCanceledException`, and a configured request timeout as `OpenAiTimeoutException` (exposing `RequestUri` and `Timeout`). A successful response with an empty body (for example `204 No Content`) returns `default` instead of throwing.
 
 ### Cancellation
 

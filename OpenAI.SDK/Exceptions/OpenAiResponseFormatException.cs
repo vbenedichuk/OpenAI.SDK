@@ -26,6 +26,14 @@ namespace OpenAI.SDK.Exceptions
         /// </summary>
         public Uri RequestUri { get; }
 
+        /// <summary>
+        /// Initializes a new instance of the <see cref="OpenAiResponseFormatException"/> class.
+        /// </summary>
+        /// <param name="statusCode">The HTTP status code returned by the server.</param>
+        /// <param name="responseContents">The captured response body, or its first 64 KB.</param>
+        /// <param name="message">A description of the failure.</param>
+        /// <param name="requestUri">The request URI, when available.</param>
+        /// <param name="innerException">The original deserialization exception.</param>
         public OpenAiResponseFormatException(HttpStatusCode statusCode, string responseContents, string message, Uri requestUri, Exception innerException)
             : base(ComposeMessage(statusCode, requestUri, message), innerException)
         {
