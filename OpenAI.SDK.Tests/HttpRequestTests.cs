@@ -45,6 +45,19 @@ public class HttpRequestTests
         Assert.Equal(new byte[] { 1, 2, 3 }, content);
         var request = Assert.Single(handler.Requests);
         Assert.Equal("https://api.openai.com/v1/files/file-123/content", request.RequestUri!.AbsoluteUri);
+        Assert.Empty(request.Headers.Accept);
+    }
+
+    [Fact]
+    public async Task RetrieveFileContent_ReturnsEmptyArray_WhenResponseHasNoContent()
+    {
+        var handler = new StubHttpMessageHandler(_ => new HttpResponseMessage(HttpStatusCode.NoContent));
+        using var provider = CreateProvider(handler);
+
+        var filesApi = provider.GetRequiredService<IFilesApi>();
+        var content = await filesApi.RetrieveFileContentAsync("file-123", CancellationToken.None);
+
+        Assert.Equal(Array.Empty<byte>(), content);
     }
 
     [Fact]
@@ -397,6 +410,7 @@ public class HttpRequestTests
         Assert.Equal("test-key", request.Headers.Authorization.Parameter);
         Assert.NotNull(request.Content);
         Assert.Equal("application/json", request.Content!.Headers.ContentType!.MediaType);
+        Assert.Equal("application/json", Assert.Single(request.Headers.Accept).MediaType);
 
         Assert.NotNull(requestBody);
         using var document = JsonDocument.Parse(requestBody);
