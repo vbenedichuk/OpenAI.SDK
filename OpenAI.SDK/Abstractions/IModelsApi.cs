@@ -15,7 +15,6 @@ namespace OpenAI.SDK.Abstractions
         /// implements GET https://api.openai.com/v1/models
         /// Lists the currently available models, and provides basic information about each one such as the owner and availability.
         /// </summary>
-        /// <param name="modelId"></param>
         /// <returns></returns>
         [Obsolete("Use the overload that accepts a CancellationToken.")]
         Task<List<ApiModel>> GetModelsAsync();

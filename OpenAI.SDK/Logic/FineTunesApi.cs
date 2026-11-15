@@ -2,12 +2,10 @@
 using OpenAI.SDK.Abstractions;
 using OpenAI.SDK.Configuration;
 using OpenAI.SDK.Models;
-using OpenAI.SDK.Models.Completions;
 using OpenAI.SDK.Models.FineTunes;
 using System;
 using System.Collections.Generic;
 using System.Net.Http;
-using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 

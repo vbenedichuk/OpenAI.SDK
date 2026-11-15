@@ -1,5 +1,4 @@
-﻿using OpenAI.SDK.Models;
-using OpenAI.SDK.Models.Engines;
+﻿using OpenAI.SDK.Models.Engines;
 using System;
 using System.Collections.Generic;
 using System.Threading;

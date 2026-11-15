@@ -1,10 +1,5 @@
-﻿using OpenAI.SDK.Models;
-using OpenAI.SDK.Models.Completions;
-using OpenAI.SDK.Models.Edits;
+﻿using OpenAI.SDK.Models.Completions;
 using System;
-using System.Collections;
-using System.Collections.Generic;
-using System.Reflection;
 using System.Threading;
 using System.Threading.Tasks;
 

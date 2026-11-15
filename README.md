@@ -10,9 +10,14 @@ A C# wrapper around the [OpenAI REST API](https://platform.openai.com/docs/api-r
 - Image generation and editing
 - Embeddings, files, moderations, models
 - Dependency-injection friendly (`Microsoft.Extensions.DependencyInjection`)
-- `CancellationToken` support on every method
+- `CancellationToken` support on every non-obsolete method
 - Clear configuration validation and typed exceptions
 - Retired endpoints kept for backward compatibility
+
+## Requirements
+
+- The library targets `netstandard2.0`, so it can be consumed from .NET Framework 4.6.1+, .NET Core 2.0+ and .NET 5+.
+- Building the repository requires the .NET 10 SDK because the sample app targets `net10.0`. The test project targets `net8.0`.
 
 ## Installation
 
@@ -87,7 +92,7 @@ Retired (kept for backward compatibility, marked `[Obsolete]`):
 
 ## Usage
 
-All API methods accept a `CancellationToken`.
+All non-obsolete API methods accept a `CancellationToken`. The legacy overloads without a token are marked `[Obsolete]` and delegate to the token-aware versions.
 
 ### Chat completions
 
@@ -165,11 +170,20 @@ catch (OpenAiApiException ex)
 
 ### Cancellation
 
-Every method accepts a `CancellationToken`. Pre-cancelled tokens are honoured and dynamic cancellation propagates to the underlying HTTP request.
+Every non-obsolete method accepts a `CancellationToken`. Pre-cancelled tokens are honoured and dynamic cancellation propagates to the underlying HTTP request. A configured `OpenAiOptions.Timeout` is combined with the caller token.
 
 ### Streaming
 
 Streaming (`stream: true`) is not supported by this SDK. Setting it throws `NotSupportedException`.
+
+## Building from source
+
+```bash
+dotnet build OpenAI.sln -p:GeneratePackageOnBuild=false
+dotnet test OpenAI.SDK.Tests/OpenAI.SDK.Tests.csproj
+```
+
+The test suite uses local HTTP stubs and never calls the OpenAI API. Running `dotnet build OpenAI.sln` without the property also produces the NuGet package (`GeneratePackageOnBuild=True`).
 
 ## Sample application
 
