@@ -2,7 +2,9 @@
 using OpenAI.SDK.Abstractions;
 using OpenAI.SDK.Configuration;
 using OpenAI.SDK.Models.Embeddings;
+using System;
 using System.Net.Http;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace OpenAI.SDK.Logic
@@ -13,9 +15,30 @@ namespace OpenAI.SDK.Logic
             IOptions<OpenAiOptions> options) : base(clientFactory, options)
         {
         }
-        public async Task<EmbeddingsResponse> CreateEmbeddings(EmbeddingsRequest request)
+
+        public async Task<EmbeddingsResponse> CreateEmbeddingsAsync(EmbeddingsRequest request, CancellationToken cancellationToken = default)
         {
-            var result = await ExecuteRequest<EmbeddingsRequest, EmbeddingsResponse>(HttpMethod.Post, "embeddings", request);
+            if (request == null)
+            {
+                throw new ArgumentNullException(nameof(request));
+            }
+            if (string.IsNullOrWhiteSpace(request.Model))
+            {
+                throw new ArgumentException("Model is required.", nameof(request));
+            }
+            if (request.Input == null)
+            {
+                throw new ArgumentException("Input is required.", nameof(request));
+            }
+            if (request.Input is string textInput && string.IsNullOrWhiteSpace(textInput))
+            {
+                throw new ArgumentException("Input is required.", nameof(request));
+            }
+            if (request.Input is System.Collections.ICollection collectionInput && collectionInput.Count == 0)
+            {
+                throw new ArgumentException("Input is required.", nameof(request));
+            }
+            var result = await ExecuteRequest<EmbeddingsRequest, EmbeddingsResponse>(HttpMethod.Post, "embeddings", request, cancellationToken).ConfigureAwait(false);
             return result;
         }
     }

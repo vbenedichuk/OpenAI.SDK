@@ -4,7 +4,7 @@ using System.Runtime.Serialization;
 namespace OpenAI.SDK.Exceptions
 {
     /// <summary>
-    /// Base class for ApenAI related exceptions.
+    /// Base class for OpenAI related exceptions.
     /// </summary>
     [Serializable]
     public class OpenAiException : Exception

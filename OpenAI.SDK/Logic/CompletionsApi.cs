@@ -1,21 +1,16 @@
 ﻿using Microsoft.Extensions.Options;
 using OpenAI.SDK.Abstractions;
 using OpenAI.SDK.Configuration;
-using OpenAI.SDK.Exceptions;
-using OpenAI.SDK.Models;
 using OpenAI.SDK.Models.Completions;
-using OpenAI.SDK.Models.Edits;
 using System;
-using System.Collections.Generic;
 using System.Net.Http;
-using System.Net.Http.Headers;
-using System.Net.Http.Json;
-using System.Text.Json;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace OpenAI.SDK.Logic
 {
 
+    [Obsolete("API is not supported anymore")]
     internal class CompletionsApi : BaseApi, ICompletionsApi
     {
         public CompletionsApi(IHttpClientFactory clientFactory,
@@ -23,15 +18,23 @@ namespace OpenAI.SDK.Logic
         {
         }
 
-        /// </<inheritdoc/>
-        public async Task<ApiCompletionResponse> CreateCompletionAsync(ApiCompletionRequest apiCompletionRequest)
+        /// <inheritdoc/>
+        public async Task<ApiCompletionResponse> CreateCompletionAsync(ApiCompletionRequest apiCompletionRequest, CancellationToken cancellationToken = default)
         {
+            if (apiCompletionRequest == null)
+            {
+                throw new ArgumentNullException(nameof(apiCompletionRequest));
+            }
+            if (string.IsNullOrWhiteSpace(apiCompletionRequest.Model))
+            {
+                throw new ArgumentException("Model is required.", nameof(apiCompletionRequest));
+            }
             if (apiCompletionRequest.Stream == true)
             {
                 throw new NotSupportedException("Streaming responses are not supported by this SDK.");
             }
 
-            var response = await ExecuteRequest<ApiCompletionRequest, ApiCompletionResponse>(HttpMethod.Post, "completions", apiCompletionRequest);
+            var response = await ExecuteRequest<ApiCompletionRequest, ApiCompletionResponse>(HttpMethod.Post, "completions", apiCompletionRequest, cancellationToken).ConfigureAwait(false);
             return response;
         }        
     }

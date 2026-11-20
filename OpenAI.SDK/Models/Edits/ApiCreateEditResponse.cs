@@ -6,7 +6,7 @@ namespace OpenAI.SDK.Models.Edits
     /// <summary>
     /// Class to represent a response to an API request to create an edit.
     /// </summary>
-    public class ApiCreateEditRespoinse
+    public class ApiCreateEditResponse
     {
         /// <summary>
         /// The type of the object that was created.

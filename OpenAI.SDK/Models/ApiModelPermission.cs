@@ -1,7 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
-using System.Text.Json.Serialization;
+﻿using System.Text.Json.Serialization;
 
 namespace OpenAI.SDK.Models
 {
@@ -14,9 +11,9 @@ namespace OpenAI.SDK.Models
         [JsonPropertyName("created")]
         public long Created { get; set; }
         [JsonPropertyName("allow_create_engine")]
-        public bool AlowCreateEngine { get; set; }
+        public bool AllowCreateEngine { get; set; }
         [JsonPropertyName("allow_sampling")]
-        public bool AlowSampling { get; set; }
+        public bool AllowSampling { get; set; }
         [JsonPropertyName("allow_logprobs")]
         public bool AllowLogprobs { get; set; }
         [JsonPropertyName("allow_search_indices")]

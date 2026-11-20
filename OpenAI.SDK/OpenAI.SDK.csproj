@@ -1,25 +1,28 @@
-<Project Sdk="Microsoft.NET.Sdk">
+﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
     <TargetFramework>netstandard2.0</TargetFramework>
-    <Version>1.4.0</Version>
+    <Version>2.0.0</Version>
     <GeneratePackageOnBuild>True</GeneratePackageOnBuild>
+    <GenerateDocumentationFile>True</GenerateDocumentationFile>
     <PackageId>VB.$(AssemblyName)</PackageId>
     <Title>An integration library for OpenAi SDK</Title>
-    <Authors>Vyacheslav Benedihuk</Authors>
+    <Authors>Vyacheslav Benedichuk</Authors>
     <Product>VB.$(AssemblyName)</Product>
     <Description>Open AI integration api wrapper for .net</Description>
     <Copyright>(c) 2022-2023 by Vyacheslav Benedichuk</Copyright>
     <PackageProjectUrl>https://github.com/vbenedichuk/OpenAI.SDK</PackageProjectUrl>
     <PackageReadmeFile>README.md</PackageReadmeFile>
-    <RepositoryUrl>https://github.com/vbenedichuk</RepositoryUrl>
-    <RepositoryType>https://github.com/vbenedichuk/OpenAI.SDK</RepositoryType>
+    <RepositoryUrl>https://github.com/vbenedichuk/OpenAI.SDK</RepositoryUrl>
+    <RepositoryType>git</RepositoryType>
     <PackageTags>openai sdk</PackageTags>
-    <PackageReleaseNotes>1.4.0: Fixed file content download, moderation results, fine-tune file deserialization, DI registrations, logprobs mapping, base URL normalization, and streaming validation.</PackageReleaseNotes>
-    <PackageLicenseFile>README.md</PackageLicenseFile>
+    <PackageReleaseNotes>2.0.0: CancellationToken support on every API; obsolete overloads without a token. Modern Chat DTOs (tools, structured output, multimodal content, max_completion_tokens, typed logprobs/annotations/audio, refusal). Configurable Timeout (honoured end-to-end via an infinite-timeout named HttpClient) and named HttpClient. Dedicated OpenAiResponseFormatException and OpenAiTimeoutException (RequestUri, Timeout). Input validation with clear exceptions. Robust HTTP handling: streamed JSON, empty/204 bodies, 64 KB error-body cap, URL escaping, ConfigureAwait(false). Richer DTOs (file status details, image usage, token details, model/image metadata). Image model/quality/output format/background for generation and editing; mask filename defaults to mask.png. Breaking: CreateImageEditAsync gained quality/outputFormat/background, EmbeddingsRequest.Input and ApiCompletionRequest.Stop accept objects, ChatCompletionChoice.Logprobs and chat annotation/audio payloads are typed, FileDetails.StatusDetails and CreateImageResponse.Usage retyped, deserialization failures throw OpenAiResponseFormatException, timeouts throw OpenAiTimeoutException.</PackageReleaseNotes>
+    <PackageLicenseFile>LICENSE</PackageLicenseFile>
     <PackageRequireLicenseAcceptance>True</PackageRequireLicenseAcceptance>
     <IncludeSymbols>True</IncludeSymbols>
     <SymbolPackageFormat>snupkg</SymbolPackageFormat>
+    <LangVersion>8.0</LangVersion>
+    <NoWarn>$(NoWarn);CS1591</NoWarn>
   </PropertyGroup>
 
   <ItemGroup>
@@ -27,13 +30,17 @@
       <Pack>True</Pack>
       <PackagePath>\</PackagePath>
     </None>
+    <None Include="..\LICENSE">
+      <Pack>True</Pack>
+      <PackagePath>\</PackagePath>
+    </None>
   </ItemGroup>
 
 
   <ItemGroup>
-    <PackageReference Include="Microsoft.Extensions.Http" Version="7.0.0" />
-    <PackageReference Include="System.Net.Http.Json" Version="7.0.0" />
-    <PackageReference Include="System.Text.Json" Version="8.0.4" />
+    <PackageReference Include="Microsoft.Extensions.Http" Version="8.0.0" />
+    <PackageReference Include="System.Net.Http.Json" Version="8.0.0" />
+    <PackageReference Include="System.Text.Json" Version="8.0.6" />
   </ItemGroup>
 
 </Project>

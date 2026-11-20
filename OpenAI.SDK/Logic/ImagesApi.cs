@@ -1,14 +1,12 @@
 ﻿using Microsoft.Extensions.Options;
 using OpenAI.SDK.Abstractions;
 using OpenAI.SDK.Configuration;
-using OpenAI.SDK.Exceptions;
 using OpenAI.SDK.Models.CreateImage;
 using System;
+using System.Globalization;
 using System.IO;
 using System.Net.Http;
-using System.Net.Http.Headers;
-using System.Runtime.InteropServices.ComTypes;
-using System.Text.Json;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace OpenAI.SDK.Logic
@@ -19,63 +17,72 @@ namespace OpenAI.SDK.Logic
             IOptions<OpenAiOptions> options) : base(clientFactory, options)
         {
         }
-
-        public async Task<CreateImageResponse> CreateImageAsync(CreateImageRequest request)
+        public async Task<CreateImageResponse> CreateImageAsync(CreateImageRequest request, CancellationToken cancellationToken = default)
         {
-            var response = await ExecuteRequest<CreateImageRequest,CreateImageResponse>(HttpMethod.Post, "images/generations", request);
-            return response;          
+            if (request == null)
+            {
+                throw new ArgumentNullException(nameof(request));
+            }
+            if (string.IsNullOrWhiteSpace(request.Prompt))
+            {
+                throw new ArgumentException("Prompt is required.", nameof(request));
+            }
+            var response = await ExecuteRequest<CreateImageRequest, CreateImageResponse>(HttpMethod.Post, "images/generations", request, cancellationToken).ConfigureAwait(false);
+            return response;
         }
 
-        public async Task<CreateImageResponse> CreateImageEditAsync(Stream image, string imageFileName, string prompt, Stream mask = null,
-            string maskFileName = null, int? n = null, string size = null, string responseFormat = null, string user = null)
+        public Task<CreateImageResponse> CreateImageEditAsync(Stream image, string imageFileName, string prompt, Stream mask = null,
+            string maskFileName = null, int? n = null, string size = null, string responseFormat = null, string user = null,
+            string model = null, string quality = null, string outputFormat = null, string background = null, CancellationToken cancellationToken = default)
         {
-            var url = new Uri(_baseUri, "images/edits");
-            var request = new HttpRequestMessage(HttpMethod.Post, url);
-            request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", _options.ApiKey);
-            var content = PrepareRequestContent(image, imageFileName, prompt, mask, maskFileName, n, size, responseFormat, user);
-            request.Content = content;
-            var client = _clientFactory.CreateClient();
-            var response = await client.SendAsync(request);
-            if (response.IsSuccessStatusCode)
+            if (image == null)
             {
-                var contentString = await response.Content.ReadAsStringAsync();
-                var result = JsonSerializer.Deserialize<CreateImageResponse>(contentString);
-                return result;
+                throw new ArgumentNullException(nameof(image));
             }
-            else
+            if (string.IsNullOrWhiteSpace(imageFileName))
             {
-                throw new OpenAiApiException(response.StatusCode, await response.Content.ReadAsStringAsync(), response.ReasonPhrase);
+                throw new ArgumentException("Image file name is required.", nameof(imageFileName));
             }
+            if (string.IsNullOrWhiteSpace(prompt))
+            {
+                throw new ArgumentException("Prompt is required.", nameof(prompt));
+            }
+
+            var content = PrepareRequestContent(image, imageFileName, prompt, mask, maskFileName, n, size, responseFormat, user, model, quality, outputFormat, background);
+            return ExecuteMultipartRequestAsync<CreateImageResponse>(HttpMethod.Post, "images/edits", content, cancellationToken);
         }
 
-        public async Task<CreateImageResponse> CreateImageVariation(Stream image, string imageFileName, int? n = null, string size = null, 
+        [Obsolete("The /images/variations endpoint has been retired. Use CreateImageEditAsync with a GPT Image model instead.")]
+        public Task<CreateImageResponse> CreateImageVariation(Stream image, string imageFileName, int? n = null, string size = null,
             string responseFormat = null, string user = null)
         {
-            var url = new Uri(_baseUri, "images/variations");
-            var request = new HttpRequestMessage(HttpMethod.Post, url);
-            request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", _options.ApiKey);
-            var content = PrepareRequestContent(image, imageFileName, null, null, null, n, size, responseFormat, user);
-            request.Content = content;
-            var client = _clientFactory.CreateClient();
-            var response = await client.SendAsync(request);
-            if (response.IsSuccessStatusCode)
+            return CreateImageVariationAsync(image, imageFileName, n, size, responseFormat, user, CancellationToken.None);
+        }
+
+        [Obsolete("The /images/variations endpoint has been retired. Use CreateImageEditAsync with a GPT Image model instead.")]
+        public Task<CreateImageResponse> CreateImageVariationAsync(Stream image, string imageFileName, int? n = null, string size = null,
+            string responseFormat = null, string user = null, CancellationToken cancellationToken = default)
+        {
+            if (image == null)
             {
-                var contentString = await response.Content.ReadAsStringAsync();
-                var result = JsonSerializer.Deserialize<CreateImageResponse>(contentString);
-                return result;
+                throw new ArgumentNullException(nameof(image));
             }
-            else
+            if (string.IsNullOrWhiteSpace(imageFileName))
             {
-                throw new OpenAiApiException(response.StatusCode, await response.Content.ReadAsStringAsync(), response.ReasonPhrase);
+                throw new ArgumentException("Image file name is required.", nameof(imageFileName));
             }
+
+            var content = PrepareRequestContent(image, imageFileName, null, null, null, n, size, responseFormat, user, null);
+            return ExecuteMultipartRequestAsync<CreateImageResponse>(HttpMethod.Post, "images/variations", content, cancellationToken);
         }
 
         private static MultipartFormDataContent PrepareRequestContent(Stream image, string imageFileName, string prompt, Stream mask = null,
-            string maskFileName = null, int? n = null, string size = null, string responseFormat = null, string user = null)
+            string maskFileName = null, int? n = null, string size = null, string responseFormat = null, string user = null, string model = null,
+            string quality = null, string outputFormat = null, string background = null)
         {
             var content = new MultipartFormDataContent()
             {
-                { new StreamContent(image), "image", imageFileName }
+                { new StreamContent(new NonDisposingStream(image)), "image", imageFileName }
             };
             if (!string.IsNullOrWhiteSpace(prompt))
             {
@@ -83,11 +90,12 @@ namespace OpenAI.SDK.Logic
             }
             if (mask != null)
             {
-                content.Add(new StreamContent(mask), "mask", maskFileName);
+                var maskName = string.IsNullOrWhiteSpace(maskFileName) ? "mask.png" : maskFileName;
+                content.Add(new StreamContent(new NonDisposingStream(mask)), "mask", maskName);
             }
             if (n != null)
             {
-                content.Add(new StringContent(n.ToString()), "n");
+                content.Add(new StringContent(n.Value.ToString(CultureInfo.InvariantCulture)), "n");
             }
             if (!string.IsNullOrWhiteSpace(size))
             {
@@ -100,6 +108,22 @@ namespace OpenAI.SDK.Logic
             if (user != null)
             {
                 content.Add(new StringContent(user), "user");
+            }
+            if (!string.IsNullOrWhiteSpace(model))
+            {
+                content.Add(new StringContent(model), "model");
+            }
+            if (!string.IsNullOrWhiteSpace(quality))
+            {
+                content.Add(new StringContent(quality), "quality");
+            }
+            if (!string.IsNullOrWhiteSpace(outputFormat))
+            {
+                content.Add(new StringContent(outputFormat), "output_format");
+            }
+            if (!string.IsNullOrWhiteSpace(background))
+            {
+                content.Add(new StringContent(background), "background");
             }
             return content;
         }

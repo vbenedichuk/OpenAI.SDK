@@ -1,8 +1,11 @@
 ﻿using OpenAI.SDK.Models.Edits;
+using System;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace OpenAI.SDK.Abstractions
 {
+    [Obsolete("API is not supported anymore")]
     public interface IEditsApi
     {
         /// <summary>
@@ -10,7 +13,8 @@ namespace OpenAI.SDK.Abstractions
         /// Creates a new edit for the provided input, instruction, and parameters.
         /// </summary>
         /// <param name="createEditRequest"></param>
+        /// <param name="cancellationToken">A token to cancel the request.</param>
         /// <returns></returns>
-        Task<ApiCreateEditRespoinse> CreateEdit(ApiCreateEditRequest createEditRequest);
+        Task<ApiCreateEditResponse> CreateEditAsync(ApiCreateEditRequest createEditRequest, CancellationToken cancellationToken = default);
     }
 }

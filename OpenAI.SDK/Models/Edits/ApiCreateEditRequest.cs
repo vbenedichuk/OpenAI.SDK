@@ -25,7 +25,7 @@ namespace OpenAI.SDK.Models.Edits
         /// Higher values like 0.8 will make the output more random, while lower values like 0.2 will make it more focused and deterministic.
         /// </summary>
         [JsonPropertyName("temperature")]
-        public double? Temperatue { get; set; }
+        public double? Temperature { get; set; }
         /// <summary>
         /// The top_p value to use for nucleus sampling, where the model considers the results of the tokens with top_p probability mass.
         /// So 0.1 means only the tokens comprising the top 10% probability mass are considered.

@@ -1,4 +1,5 @@
 ﻿using OpenAI.SDK.Models.Chat;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace OpenAI.SDK.Abstractions
@@ -9,8 +10,9 @@ namespace OpenAI.SDK.Abstractions
         /// POST https://api.openai.com/v1/chat/completions 
         /// Creates a completion for the chat message
         /// </summary>
-        /// <param name="apiCompletionRequest"></param>
+        /// <param name="apiChatCompletionRequest"></param>
+        /// <param name="cancellationToken">A token to cancel the request.</param>
         /// <returns></returns>
-        Task<ApiChatCompletionResponse> CreateCompletionAsync(ApiChatCompletionRequest apiChatCompletionRequest);
+        Task<ApiChatCompletionResponse> CreateCompletionAsync(ApiChatCompletionRequest apiChatCompletionRequest, CancellationToken cancellationToken = default);
     }
 }

@@ -16,5 +16,9 @@ namespace OpenAI.SDK.Models.Files
         public string Filename { get; set; }
         [JsonPropertyName("purpose")]
         public string Purpose { get; set; }
+        [JsonPropertyName("status")]
+        public string Status { get; set; }
+        [JsonPropertyName("status_details")]
+        public FileStatusDetails StatusDetails { get; set; }
     }
 }

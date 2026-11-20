@@ -2,6 +2,7 @@
 using Microsoft.Extensions.DependencyInjection;
 using OpenAI.SDK.Abstractions;
 using OpenAI.SDK.Configuration;
+using OpenAI.SDK.Exceptions;
 using OpenAI.SDK.Models.Chat;
 using System.Text.Json;
 
@@ -9,113 +10,91 @@ namespace OpenAI.SDK.SampleConsoleApp
 {
     internal class Program
     {
-        static void Main(string[] args)
+        static async Task<int> Main(string[] args)
         {
-            var apiKey = string.Empty;
+            var configuration = new ConfigurationBuilder()
+                .AddUserSecrets<Program>()
+                .AddEnvironmentVariables()
+                .Build();
 
-            if (System.Diagnostics.Debugger.IsAttached)
+            var options = SampleConfiguration.Load(configuration, Environment.GetEnvironmentVariable);
+
+            if (string.IsNullOrWhiteSpace(options.ApiKey))
             {
-
-                var builder = new ConfigurationBuilder()
-                    .AddUserSecrets<Program>();
-
-                var configuration = builder.Build();
-
-                apiKey = configuration.GetValue<string>("OpenAI:Api:ApiKey");
+                await Console.Error.WriteLineAsync(
+                    "OpenAI API key is not configured. Set it with 'dotnet user-secrets set \"OpenAI:Api:ApiKey\" \"YOUR_KEY\"' " +
+                    "or provide the OPENAI_API_KEY environment variable.");
+                return 1;
             }
 
             var services = new ServiceCollection();
-            services.Configure<OpenAiOptions>(options => 
-                {
-                    options.ApiKey = apiKey;
-                    options.BaseUrl = "https://api.openai.com/v1/";
-                });
-            services.AddHttpClient();
+            services.Configure<OpenAiOptions>(configured =>
+            {
+                configured.ApiKey = options.ApiKey;
+                configured.BaseUrl = options.BaseUrl;
+                configured.Timeout = options.Timeout;
+            });
             services.AddOpenAiApi();
 
-            var serviceProvider = services.BuildServiceProvider();
+            using var serviceProvider = services.BuildServiceProvider();
 
-            var embeddingsApi = serviceProvider.GetRequiredService<IEmbeddingsApi>();
-            var embeddingsResult = embeddingsApi.CreateEmbeddings(new Models.Embeddings.EmbeddingsRequest
+            try
             {
-                Model = "text-embedding-ada-002",
-                Input = new[] { "Just a test string" },
-                User = "VB"
-            }).Result;
-
-
-            Console.WriteLine(JsonSerializer.Serialize(embeddingsResult));
-            Console.WriteLine("------------------------------------------------------");
-            var modelsApi = serviceProvider.GetRequiredService<IModelsApi>();
-
-            var models = modelsApi.GetModelsAsync().Result;
-            Console.WriteLine(JsonSerializer.Serialize(models));
-            Console.WriteLine("------------------------------------------------------");
-
-            var completionsApi = serviceProvider.GetRequiredService<ICompletionsApi>();
-
-            var completionResult = completionsApi.CreateCompletionAsync(new Models.Completions.ApiCompletionRequest
-            {
-                Model = "davinci",
-                Prompt =
-                new List<string>()
+                var embeddingsApi = serviceProvider.GetRequiredService<IEmbeddingsApi>();
+                var embeddingsResult = await embeddingsApi.CreateEmbeddingsAsync(new Models.Embeddings.EmbeddingsRequest
                 {
-                                @"I celebrate myself, and sing myself,
-            And what I assume you shall assume,",
-                                @"I sing the body electric,
-            The armies of those I love engirth me and I engirth them,"
-                },
-                Temperatue = 0.2
-            }).Result;
-            foreach (var edit in completionResult.Choices)
-            {
-                Console.WriteLine(edit.Text);
-            }
-            Console.WriteLine(JsonSerializer.Serialize(completionResult));
-            Console.WriteLine("------------------------------------------------------");
+                    Model = "text-embedding-3-small",
+                    Input = new[] { "Just a test string" }
+                }, CancellationToken.None);
 
-            var chatCompletionsApi = serviceProvider.GetRequiredService<IChatApi>();
-            var chatCompletionResult = chatCompletionsApi.CreateCompletionAsync(new Models.Chat.ApiChatCompletionRequest
-            {
-                Model = "gpt-3.5-turbo",
-                Messages = new List<ChatMessage>
+                Console.WriteLine(JsonSerializer.Serialize(embeddingsResult));
+                Console.WriteLine("------------------------------------------------------");
+
+                var modelsApi = serviceProvider.GetRequiredService<IModelsApi>();
+                var models = await modelsApi.GetModelsAsync(CancellationToken.None);
+                Console.WriteLine(JsonSerializer.Serialize(models));
+                Console.WriteLine("------------------------------------------------------");
+
+                var chatCompletionsApi = serviceProvider.GetRequiredService<IChatApi>();
+                var chatCompletionResult = await chatCompletionsApi.CreateCompletionAsync(new Models.Chat.ApiChatCompletionRequest
                 {
-                    new ChatMessage{ Role ="user", Content = "Hello!"}
+                    Model = "gpt-4o-mini",
+                    Messages = new List<ChatMessage>
+                    {
+                        new ChatMessage { Role = "user", Content = "Hello!" }
+                    }
+                }, CancellationToken.None);
+                Console.WriteLine(JsonSerializer.Serialize(chatCompletionResult));
+                Console.WriteLine("------------------------------------------------------");
+
+                var imagesApi = serviceProvider.GetRequiredService<IImagesApi>();
+                var imageResult = await imagesApi.CreateImageAsync(new Models.CreateImage.CreateImageRequest
+                {
+                    Model = "gpt-image-2",
+                    Prompt = "A green rabbit jumping through a burning circle.",
+                    N = 1
+                }, CancellationToken.None);
+                Console.WriteLine($"Generated {imageResult.Data?.Count ?? 0} image(s).");
+                if (imageResult.Data != null)
+                {
+                    foreach (var image in imageResult.Data)
+                    {
+                        Console.WriteLine(!string.IsNullOrWhiteSpace(image.Url)
+                            ? image.Url
+                            : $"<base64 image: {image.B64Json?.Length ?? 0} chars>");
+                    }
                 }
-            }).Result;
-            Console.WriteLine(JsonSerializer.Serialize(chatCompletionResult));
-            Console.WriteLine("------------------------------------------------------");
-
-            var editsApi = serviceProvider.GetRequiredService<IEditsApi>();
-            var editResult = editsApi.CreateEdit(new Models.Edits.ApiCreateEditRequest
-            {
-                Model = "text-davinci-edit-001",
-
-                Input = "Iis it possible fix spelling hre?",
-                Instruction = "Fix spelling and grammar",
-                Temperatue = 0.2
-            }).Result;
-            foreach (var edit in editResult.Choices)
-            {
-                Console.WriteLine(edit.Text);
+                Console.WriteLine("------------------------------------------------------");
             }
-            Console.WriteLine(JsonSerializer.Serialize(editResult));
-            Console.WriteLine("------------------------------------------------------");
-
-            var imagesApi = serviceProvider.GetRequiredService<IImagesApi>();
-            var imageResult = imagesApi.CreateImageAsync(new Models.CreateImage.CreateImageRequest
+            catch (OpenAiException ex)
             {
-                Prompt = "Green rabbit jumping through the burning circle.",
-                N = 3
-            }).Result;
-            Console.WriteLine(JsonSerializer.Serialize(imageResult));
-            Console.WriteLine("------------------------------------------------------");
+                // Catch the SDK base type so API errors, timeouts and response-format
+                // failures are all reported instead of escaping as an unhandled exception.
+                await Console.Error.WriteLineAsync($"OpenAI request failed: {ExceptionReport.ToText(ex)}");
+                return 1;
+            }
 
-            var imageStream = File.OpenRead("BlackCircle.png");
-            var imageVariationsResult = imagesApi.CreateImageVariation(imageStream, "image.png", 3, "1024x1024").Result;
-            Console.WriteLine(JsonSerializer.Serialize(imageVariationsResult));
-            Console.WriteLine("------------------------------------------------------");
-
+            return 0;
         }
     }
 }

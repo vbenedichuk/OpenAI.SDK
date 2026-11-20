@@ -14,6 +14,6 @@ namespace OpenAI.SDK.Models.FineTunes
         [JsonPropertyName("n_epochs")]
         public int NEpochs { get; set; }
         [JsonPropertyName("prompt_loss_weight")]
-        public double PromptLossWeitghs { get; set; }
+        public double PromptLossWeight { get; set; }
     }
 }

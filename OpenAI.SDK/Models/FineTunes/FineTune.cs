@@ -17,7 +17,7 @@ namespace OpenAI.SDK.Models.FineTunes
         [JsonPropertyName("events")]
         public List<FineTuneEvent> Events { get; set; }
         [JsonPropertyName("fine_tuned_model")]
-        public string FimeTunedModel { get; set; }
+        public string FineTunedModel { get; set; }
         [JsonPropertyName("hyperparams")]
         public FineTuneHyperparams Hyperparams { get; set; }
         [JsonPropertyName("organization_id")]

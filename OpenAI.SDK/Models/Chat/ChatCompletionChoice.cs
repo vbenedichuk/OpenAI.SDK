@@ -6,9 +6,14 @@ namespace OpenAI.SDK.Models.Chat
     {
         [JsonPropertyName("index")]
         public int Index { get; set; }
+
         [JsonPropertyName("message")]
         public ChatMessage Message { get; set; }
+
         [JsonPropertyName("finish_reason")]
         public string FinishReason { get; set; }
+
+        [JsonPropertyName("logprobs")]
+        public ChatCompletionLogprobs Logprobs { get; set; }
     }
 }

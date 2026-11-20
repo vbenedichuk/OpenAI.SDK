@@ -1,5 +1,6 @@
 ﻿using OpenAI.SDK.Models;
 using System.Collections.Generic;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace OpenAI.SDK.Abstractions
@@ -9,19 +10,22 @@ namespace OpenAI.SDK.Abstractions
     /// </summary>
     public interface IModelsApi
     {
+
         /// <summary>
         /// implements GET https://api.openai.com/v1/models
         /// Lists the currently available models, and provides basic information about each one such as the owner and availability.
         /// </summary>
-        /// <param name="modelId"></param>
+        /// <param name="cancellationToken">A token to cancel the request.</param>
         /// <returns></returns>
-        Task<List<ApiModel>> GetModelsAsync();
+        Task<List<ApiModel>> GetModelsAsync(CancellationToken cancellationToken = default);
+
         /// <summary>
         /// GET https://api.openai.com/v1/models/{modelId}
         /// Retrieves a model instance, providing basic information about the model such as the owner and permissioning.
         /// </summary>
         /// <param name="modelId">The ID of the model to use for this request</param>
+        /// <param name="cancellationToken">A token to cancel the request.</param>
         /// <returns></returns>
-        Task<ApiModel> RetrieveModelAsync(string modelId);
+        Task<ApiModel> RetrieveModelAsync(string modelId, CancellationToken cancellationToken = default);
     }
 }
