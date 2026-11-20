@@ -92,7 +92,7 @@ Retired (kept for backward compatibility, marked `[Obsolete]`):
 
 ## Usage
 
-All non-obsolete API methods accept a `CancellationToken`. The legacy overloads without a token are marked `[Obsolete]` and delegate to the token-aware versions.
+All non-obsolete API methods accept an optional `CancellationToken`; omitting it uses `CancellationToken.None`.
 
 ### Chat completions
 
@@ -208,7 +208,7 @@ The full changelog lives in `RELEASE_NOTES.md` in the repository (it is not pack
 
 ## Version history
 
-- **2.0.0** - `CancellationToken` support on all API methods; obsolete overloads without a token; modern chat DTOs (tools, structured output, multimodal content, typed logprobs/annotations/audio, `max_completion_tokens`); configurable timeout (honoured end-to-end) and named `HttpClient`; input validation and startup validation; trimmed API key; `BaseUrl` without query/fragment; robust HTTP handling (streamed JSON, empty bodies, 64 KB error-body cap, URL escaping, `ConfigureAwait(false)`); dedicated `OpenAiResponseFormatException`/`OpenAiTimeoutException` with request context; richer DTOs (file status details, image usage, token details); image model/quality/output format/background for generation and editing; updated README.
+- **2.0.0** - `CancellationToken` support on all API methods (optional parameter); modern chat DTOs (tools, structured output, multimodal content, typed logprobs/annotations/audio, `max_completion_tokens`); configurable timeout (honoured end-to-end) and named `HttpClient`; input validation and startup validation; trimmed API key; `BaseUrl` without query/fragment; robust HTTP handling (streamed JSON, empty bodies, 64 KB error-body cap, URL escaping, `ConfigureAwait(false)`); dedicated `OpenAiResponseFormatException`/`OpenAiTimeoutException` with request context; richer DTOs (file status details, image usage, token details); image model/quality/output format/background for generation and editing; updated README.
 - **1.4.0** — Fixed file content download, moderation results, fine-tune file deserialization, DI registrations, logprobs mapping, base URL normalization, and streaming validation.
 - **1.3** — Embeddings API call fixed.
 - **1.2** — Code cleanup and renamings.

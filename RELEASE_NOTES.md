@@ -4,7 +4,7 @@
 
 ### Highlights
 
-- `CancellationToken` support on every API method; overloads without a token are marked `[Obsolete]`.
+- `CancellationToken` support on every API method, exposed as an optional parameter.
 - Modern Chat Completions DTOs: tools/function calling, structured output (`response_format`), multimodal content parts, `max_completion_tokens`, `seed`, `logprobs`.
 - Configurable request timeout (`OpenAiOptions.Timeout`) that bounds the whole request, including reading the response body, and a named `HttpClient` (`"OpenAI"`) for Polly/retry/proxy integration.
 - Input validation with clear `ArgumentException`/`ArgumentNullException` instead of NREs/remote 400s.
