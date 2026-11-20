@@ -4,6 +4,7 @@ using System.Net.Http;
 using System.Net.Http.Headers;
 using System.Reflection;
 using System.Runtime.Serialization;
+using System.Text.Json;
 using OpenAI.SDK.Exceptions;
 
 #pragma warning disable SYSLIB0050 // Formatter-based serialization is exercised directly to verify the ISerializable contract.
@@ -47,6 +48,26 @@ public class ExceptionSerializationTests
         Assert.Equal(requestUri, restored.RequestUri);
         Assert.Equal(TimeSpan.FromSeconds(7), restored.RetryAfter);
         Assert.Null(restored.ResponseHeaders);
+    }
+
+    [Fact]
+    public void OpenAiResponseFormatException_SerializesStatusCodeResponseContentsAndRequestUri()
+    {
+        var requestUri = new Uri("https://api.openai.com/v1/chat/completions");
+        var exception = new OpenAiResponseFormatException(
+            HttpStatusCode.OK,
+            "{\"unexpected\":true}",
+            "Unexpected response shape.",
+            requestUri,
+            new JsonException("bad payload"));
+
+        var info = CaptureObjectData(exception);
+        var restored = CreateFromSerializationInfo<OpenAiResponseFormatException>(info);
+
+        Assert.Equal(HttpStatusCode.OK, restored.StatusCode);
+        Assert.Equal("{\"unexpected\":true}", restored.ResponseContents);
+        Assert.Equal(requestUri, restored.RequestUri);
+        Assert.IsType<JsonException>(restored.InnerException);
     }
 
     private static SerializationInfo CaptureObjectData(OpenAiException exception)

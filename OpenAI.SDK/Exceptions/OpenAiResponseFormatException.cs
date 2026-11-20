@@ -42,8 +42,37 @@ namespace OpenAI.SDK.Exceptions
             RequestUri = requestUri;
         }
 
+        /// <summary>
+        /// Initializes a new instance of the <see cref="OpenAiResponseFormatException"/> class.
+        /// </summary>
         protected OpenAiResponseFormatException(SerializationInfo info, StreamingContext context) : base(info, context)
         {
+            if (info == null)
+            {
+                throw new ArgumentNullException(nameof(info));
+            }
+
+            StatusCode = (HttpStatusCode)info.GetInt32(nameof(StatusCode));
+            ResponseContents = info.GetString(nameof(ResponseContents));
+            RequestUri = (Uri)info.GetValue(nameof(RequestUri), typeof(Uri));
+        }
+
+        /// <summary>
+        /// Populates a <see cref="SerializationInfo"/> with the data needed to serialize the exception.
+        /// </summary>
+        /// <param name="info">The <see cref="SerializationInfo"/> to populate.</param>
+        /// <param name="context">The destination for this serialization.</param>
+        public override void GetObjectData(SerializationInfo info, StreamingContext context)
+        {
+            if (info == null)
+            {
+                throw new ArgumentNullException(nameof(info));
+            }
+
+            info.AddValue(nameof(StatusCode), (int)StatusCode);
+            info.AddValue(nameof(ResponseContents), ResponseContents, typeof(string));
+            info.AddValue(nameof(RequestUri), RequestUri, typeof(Uri));
+            base.GetObjectData(info, context);
         }
 
         private static string ComposeMessage(HttpStatusCode statusCode, Uri requestUri, string message)
