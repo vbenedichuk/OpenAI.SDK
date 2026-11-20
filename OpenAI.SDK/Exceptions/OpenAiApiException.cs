@@ -141,8 +141,40 @@ namespace OpenAI.SDK.Exceptions
         /// <summary>
         /// Initializes a new instance of the <see cref="OpenAiApiException"/> class.
         /// </summary>
+        /// <remarks>
+        /// <see cref="ResponseHeaders"/> is not serialized because <see cref="HttpResponseHeaders"/>
+        /// is not serializable; <see cref="RetryAfter"/> is preserved instead.
+        /// </remarks>
         protected OpenAiApiException(SerializationInfo info, StreamingContext context) : base(info, context)
         {
+            if (info == null)
+            {
+                throw new ArgumentNullException(nameof(info));
+            }
+
+            StatusCode = (HttpStatusCode)info.GetInt32(nameof(StatusCode));
+            ResponseContents = info.GetString(nameof(ResponseContents));
+            RequestUri = (Uri)info.GetValue(nameof(RequestUri), typeof(Uri));
+            RetryAfter = (TimeSpan?)info.GetValue(nameof(RetryAfter), typeof(TimeSpan));
+        }
+
+        /// <summary>
+        /// Populates a <see cref="SerializationInfo"/> with the data needed to serialize the exception.
+        /// </summary>
+        /// <param name="info">The <see cref="SerializationInfo"/> to populate.</param>
+        /// <param name="context">The destination for this serialization.</param>
+        public override void GetObjectData(SerializationInfo info, StreamingContext context)
+        {
+            if (info == null)
+            {
+                throw new ArgumentNullException(nameof(info));
+            }
+
+            info.AddValue(nameof(StatusCode), (int)StatusCode);
+            info.AddValue(nameof(ResponseContents), ResponseContents, typeof(string));
+            info.AddValue(nameof(RequestUri), RequestUri, typeof(Uri));
+            info.AddValue(nameof(RetryAfter), RetryAfter, typeof(TimeSpan));
+            base.GetObjectData(info, context);
         }
     }
 }

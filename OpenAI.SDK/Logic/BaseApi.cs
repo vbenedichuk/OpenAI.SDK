@@ -115,7 +115,7 @@ namespace OpenAI.SDK.Logic
             return ExecuteHttpRequestAsync(method, resource, content, true, cancellationToken, (response, resolvedRequestUri, token) => ReadJsonResponseAsync<TResult>(response, resolvedRequestUri, token));
         }
 
-        private async Task<TResult> ReadJsonResponseAsync<TResult>(HttpResponseMessage response, Uri resolvedRequestUri, CancellationToken cancellationToken)
+        private static async Task<TResult> ReadJsonResponseAsync<TResult>(HttpResponseMessage response, Uri resolvedRequestUri, CancellationToken cancellationToken)
         {
             if (IsEmptyResponse(response))
             {

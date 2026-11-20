@@ -23,7 +23,7 @@ namespace OpenAI.SDK.Exceptions
         /// Initializes a new instance of the <see cref="OpenAiTimeoutException"/> class.
         /// </summary>
         public OpenAiTimeoutException()
-            : base("The OpenAI request timed out.")
+            : base("The API request timed out.")
         {
         }
 
@@ -59,6 +59,30 @@ namespace OpenAI.SDK.Exceptions
         /// </summary>
         protected OpenAiTimeoutException(SerializationInfo info, StreamingContext context) : base(info, context)
         {
+            if (info == null)
+            {
+                throw new ArgumentNullException(nameof(info));
+            }
+
+            RequestUri = (Uri)info.GetValue(nameof(RequestUri), typeof(Uri));
+            Timeout = (TimeSpan)info.GetValue(nameof(Timeout), typeof(TimeSpan));
+        }
+
+        /// <summary>
+        /// Populates a <see cref="SerializationInfo"/> with the data needed to serialize the exception.
+        /// </summary>
+        /// <param name="info">The <see cref="SerializationInfo"/> to populate.</param>
+        /// <param name="context">The destination for this serialization.</param>
+        public override void GetObjectData(SerializationInfo info, StreamingContext context)
+        {
+            if (info == null)
+            {
+                throw new ArgumentNullException(nameof(info));
+            }
+
+            info.AddValue(nameof(RequestUri), RequestUri, typeof(Uri));
+            info.AddValue(nameof(Timeout), Timeout, typeof(TimeSpan));
+            base.GetObjectData(info, context);
         }
 
         private static string ComposeMessage(Uri requestUri, TimeSpan timeout)
