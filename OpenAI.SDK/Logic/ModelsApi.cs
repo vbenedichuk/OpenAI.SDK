@@ -17,24 +17,10 @@ namespace OpenAI.SDK.Logic
         }
 
         /// <inheritdoc/>
-        [Obsolete("Use the overload that accepts a CancellationToken.")]
-        public Task<List<ApiModel>> GetModelsAsync()
-        {
-            return GetModelsAsync(CancellationToken.None);
-        }
-
-        /// <inheritdoc/>
         public async Task<List<ApiModel>> GetModelsAsync(CancellationToken cancellationToken = default)
         {
             var response = await ExecuteRequest<ApiModelsResponse>(HttpMethod.Get, "models", cancellationToken).ConfigureAwait(false);
             return response != null ? response.Data : null;
-        }
-
-        /// <inheritdoc/>
-        [Obsolete("Use the overload that accepts a CancellationToken.")]
-        public Task<ApiModel> RetrieveModelAsync(string modelId)
-        {
-            return RetrieveModelAsync(modelId, CancellationToken.None);
         }
 
         /// <inheritdoc/>

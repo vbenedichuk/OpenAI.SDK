@@ -18,12 +18,6 @@ namespace OpenAI.SDK.Logic
         {
         }
 
-        [Obsolete("Use the overload that accepts a CancellationToken.")]
-        public Task<FineTune> CancelFineTuneAsync(string fineTuneId)
-        {
-            return CancelFineTuneAsync(fineTuneId, CancellationToken.None);
-        }
-
         public async Task<FineTune> CancelFineTuneAsync(string fineTuneId, CancellationToken cancellationToken = default)
         {
             if (string.IsNullOrWhiteSpace(fineTuneId))
@@ -32,12 +26,6 @@ namespace OpenAI.SDK.Logic
             }
             var response = await ExecuteRequest<FineTune>(HttpMethod.Post, $"fine-tunes/{fineTuneId}/cancel", cancellationToken).ConfigureAwait(false);
             return response;
-        }
-
-        [Obsolete("Use the overload that accepts a CancellationToken.")]
-        public Task<FineTune> CreateFineTuneAsync(CreateFineTuneRequest request)
-        {
-            return CreateFineTuneAsync(request, CancellationToken.None);
         }
 
         public async Task<FineTune> CreateFineTuneAsync(CreateFineTuneRequest request, CancellationToken cancellationToken = default)
@@ -54,12 +42,6 @@ namespace OpenAI.SDK.Logic
             return response;
         }
 
-        [Obsolete("Use the overload that accepts a CancellationToken.")]
-        public Task<DeleteFineTuneResponse> DeleteFineTuneModelAsync(string model)
-        {
-            return DeleteFineTuneModelAsync(model, CancellationToken.None);
-        }
-
         public async Task<DeleteFineTuneResponse> DeleteFineTuneModelAsync(string model, CancellationToken cancellationToken = default)
         {
             if (string.IsNullOrWhiteSpace(model))
@@ -68,12 +50,6 @@ namespace OpenAI.SDK.Logic
             }
             var response = await ExecuteRequest<DeleteFineTuneResponse>(HttpMethod.Delete, $"models/{model}", cancellationToken).ConfigureAwait(false);
             return response;
-        }
-
-        [Obsolete("Use the overload that accepts a CancellationToken.")]
-        public Task<List<FineTuneEvent>> ListFineTuneEvents(string fineTuneId, bool? stream = null)
-        {
-            return ListFineTuneEventsAsync(fineTuneId, stream, CancellationToken.None);
         }
 
         public async Task<List<FineTuneEvent>> ListFineTuneEventsAsync(string fineTuneId, bool? stream = null, CancellationToken cancellationToken = default)
@@ -90,22 +66,10 @@ namespace OpenAI.SDK.Logic
             return response != null ? response.Data : null;
         }
 
-        [Obsolete("Use the overload that accepts a CancellationToken.")]
-        public Task<List<FineTune>> ListFineTunesAsync()
-        {
-            return ListFineTunesAsync(CancellationToken.None);
-        }
-
         public async Task<List<FineTune>> ListFineTunesAsync(CancellationToken cancellationToken = default)
         {
             var response = await ExecuteRequest<ListResponse<FineTune>>(HttpMethod.Get, "fine-tunes", cancellationToken).ConfigureAwait(false);
             return response != null ? response.Data : null;
-        }
-
-        [Obsolete("Use the overload that accepts a CancellationToken.")]
-        public Task<FineTune> RetrieveFineTuneAsync(string fineTuneId)
-        {
-            return RetrieveFineTuneAsync(fineTuneId, CancellationToken.None);
         }
 
         public async Task<FineTune> RetrieveFineTuneAsync(string fineTuneId, CancellationToken cancellationToken = default)

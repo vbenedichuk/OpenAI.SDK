@@ -17,15 +17,6 @@ namespace OpenAI.SDK.Abstractions
         /// Creates an image given a prompt.
         /// </summary>
         /// <param name="request"></param>
-        /// <returns></returns>
-        [Obsolete("Use the overload that accepts a CancellationToken.")]
-        Task<CreateImageResponse> CreateImageAsync(CreateImageRequest request);
-
-        /// <summary>
-        /// POST https://api.openai.com/v1/images/generations
-        /// Creates an image given a prompt.
-        /// </summary>
-        /// <param name="request"></param>
         /// <param name="cancellationToken">A token to cancel the request.</param>
         /// <returns></returns>
         Task<CreateImageResponse> CreateImageAsync(CreateImageRequest request, CancellationToken cancellationToken = default);

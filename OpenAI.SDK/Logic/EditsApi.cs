@@ -17,13 +17,6 @@ namespace OpenAI.SDK.Logic
         }
 
         /// <inheritdoc/>
-        [Obsolete("Use the overload that accepts a CancellationToken.")]
-        public Task<ApiCreateEditResponse> CreateEdit(ApiCreateEditRequest createEditRequest)
-        {
-            return CreateEditAsync(createEditRequest, CancellationToken.None);
-        }
-
-        /// <inheritdoc/>
         public async Task<ApiCreateEditResponse> CreateEditAsync(ApiCreateEditRequest createEditRequest, CancellationToken cancellationToken = default)
         {
             if (createEditRequest == null)

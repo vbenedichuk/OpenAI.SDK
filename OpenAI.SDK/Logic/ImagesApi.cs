@@ -17,13 +17,6 @@ namespace OpenAI.SDK.Logic
             IOptions<OpenAiOptions> options) : base(clientFactory, options)
         {
         }
-
-        [Obsolete("Use the overload that accepts a CancellationToken.")]
-        public Task<CreateImageResponse> CreateImageAsync(CreateImageRequest request)
-        {
-            return CreateImageAsync(request, CancellationToken.None);
-        }
-
         public async Task<CreateImageResponse> CreateImageAsync(CreateImageRequest request, CancellationToken cancellationToken = default)
         {
             if (request == null)

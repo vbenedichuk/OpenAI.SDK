@@ -20,13 +20,6 @@ namespace OpenAI.SDK.Logic
         }
 
         /// <inheritdoc/>
-        [Obsolete("Use the overload that accepts a CancellationToken.")]
-        public Task<List<FileDetails>> ListFilesAsync()
-        {
-            return ListFilesAsync(CancellationToken.None);
-        }
-
-        /// <inheritdoc/>
         public async Task<List<FileDetails>> ListFilesAsync(CancellationToken cancellationToken = default)
         {
             var response = await ExecuteRequest<ListResponse<FileDetails>>(HttpMethod.Get, "files", cancellationToken).ConfigureAwait(false);

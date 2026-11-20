@@ -19,13 +19,6 @@ namespace OpenAI.SDK.Logic
         }
 
         /// <inheritdoc/>
-        [Obsolete("Use the overload that accepts a CancellationToken.")]
-        public Task<ApiCompletionResponse> CreateCompletionAsync(ApiCompletionRequest apiCompletionRequest)
-        {
-            return CreateCompletionAsync(apiCompletionRequest, CancellationToken.None);
-        }
-
-        /// <inheritdoc/>
         public async Task<ApiCompletionResponse> CreateCompletionAsync(ApiCompletionRequest apiCompletionRequest, CancellationToken cancellationToken = default)
         {
             if (apiCompletionRequest == null)

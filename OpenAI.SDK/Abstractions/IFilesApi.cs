@@ -1,5 +1,4 @@
-﻿using OpenAI.SDK.Models;
-using OpenAI.SDK.Models.Files;
+﻿using OpenAI.SDK.Models.Files;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -10,9 +9,6 @@ namespace OpenAI.SDK.Abstractions
 {
     public interface IFilesApi
     {
-        [Obsolete("Use the overload that accepts a CancellationToken.")]
-        Task<List<FileDetails>> ListFilesAsync();
-
         Task<List<FileDetails>> ListFilesAsync(CancellationToken cancellationToken = default);
 
         [Obsolete("Use the overload that accepts a CancellationToken.")]

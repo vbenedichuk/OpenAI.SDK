@@ -18,22 +18,10 @@ namespace OpenAI.SDK.Logic
         {
         }
 
-        [Obsolete("Use the overload that accepts a CancellationToken.")]
-        public Task<List<EngineInfo>> ListEnginesAsync()
-        {
-            return ListEnginesAsync(CancellationToken.None);
-        }
-
         public async Task<List<EngineInfo>> ListEnginesAsync(CancellationToken cancellationToken = default)
         {
             var result = await ExecuteRequest<ListResponse<EngineInfo>>(HttpMethod.Get, "engines", cancellationToken).ConfigureAwait(false);
             return result != null ? result.Data : null;
-        }
-
-        [Obsolete("Use the overload that accepts a CancellationToken.")]
-        public Task<EngineInfo> RetrieveEngine(string engineId)
-        {
-            return RetrieveEngineAsync(engineId, CancellationToken.None);
         }
 
         public async Task<EngineInfo> RetrieveEngineAsync(string engineId, CancellationToken cancellationToken = default)

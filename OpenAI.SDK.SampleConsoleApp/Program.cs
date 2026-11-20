@@ -21,7 +21,7 @@ namespace OpenAI.SDK.SampleConsoleApp
 
             if (string.IsNullOrWhiteSpace(options.ApiKey))
             {
-                Console.Error.WriteLine(
+                await Console.Error.WriteLineAsync(
                     "OpenAI API key is not configured. Set it with 'dotnet user-secrets set \"OpenAI:Api:ApiKey\" \"YOUR_KEY\"' " +
                     "or provide the OPENAI_API_KEY environment variable.");
                 return 1;
@@ -90,7 +90,7 @@ namespace OpenAI.SDK.SampleConsoleApp
             {
                 // Catch the SDK base type so API errors, timeouts and response-format
                 // failures are all reported instead of escaping as an unhandled exception.
-                Console.Error.WriteLine($"OpenAI request failed: {ExceptionReport.ToText(ex)}");
+                await Console.Error.WriteLineAsync($"OpenAI request failed: {ExceptionReport.ToText(ex)}");
                 return 1;
             }
 

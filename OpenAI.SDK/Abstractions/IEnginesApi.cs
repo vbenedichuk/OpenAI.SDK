@@ -6,16 +6,11 @@ using System.Threading.Tasks;
 
 namespace OpenAI.SDK.Abstractions
 {
-    [Obsolete]
+    [Obsolete("API is not supported anymore")]
     public interface IEnginesApi
     {
-        [Obsolete("Use the overload that accepts a CancellationToken.")]
-        Task<List<EngineInfo>> ListEnginesAsync();
 
         Task<List<EngineInfo>> ListEnginesAsync(CancellationToken cancellationToken = default);
-
-        [Obsolete("Use the overload that accepts a CancellationToken.")]
-        Task<EngineInfo> RetrieveEngine(string engineId);
 
         Task<EngineInfo> RetrieveEngineAsync(string engineId, CancellationToken cancellationToken = default);
     }
