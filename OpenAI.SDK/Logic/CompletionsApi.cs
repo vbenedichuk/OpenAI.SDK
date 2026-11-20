@@ -10,7 +10,7 @@ using System.Threading.Tasks;
 namespace OpenAI.SDK.Logic
 {
 
-    [Obsolete]
+    [Obsolete("API is not supported anymore")]
     internal class CompletionsApi : BaseApi, ICompletionsApi
     {
         public CompletionsApi(IHttpClientFactory clientFactory,

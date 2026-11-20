@@ -11,9 +11,6 @@ namespace OpenAI.SDK.Abstractions
     {
         Task<List<FileDetails>> ListFilesAsync(CancellationToken cancellationToken = default);
 
-        [Obsolete("Use the overload that accepts a CancellationToken.")]
-        Task<FileDetails> UploadFileAsync(Stream file, string fileName, string purpose);
-
         /// <summary>
         /// Uploads a file that can be used across various endpoints.
         /// </summary>
@@ -23,18 +20,10 @@ namespace OpenAI.SDK.Abstractions
         /// </remarks>
         Task<FileDetails> UploadFileAsync(Stream file, string fileName, string purpose, CancellationToken cancellationToken = default);
 
-        [Obsolete("Use the overload that accepts a CancellationToken.")]
-        Task<DeleteFileResponse> DeleteFileAsync(string fileId);
 
         Task<DeleteFileResponse> DeleteFileAsync(string fileId, CancellationToken cancellationToken = default);
 
-        [Obsolete("Use the overload that accepts a CancellationToken.")]
-        Task<FileDetails> RetrieveFileAsync(string fileId);
-
         Task<FileDetails> RetrieveFileAsync(string fileId, CancellationToken cancellationToken = default);
-
-        [Obsolete("Use the overload that accepts a CancellationToken.")]
-        Task<byte[]> RetrieveFileContentAsync(string fileId);
 
         Task<byte[]> RetrieveFileContentAsync(string fileId, CancellationToken cancellationToken = default);
     }

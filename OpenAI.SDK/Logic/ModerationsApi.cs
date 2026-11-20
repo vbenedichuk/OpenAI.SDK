@@ -17,12 +17,6 @@ namespace OpenAI.SDK.Logic
         {
         }
 
-        [Obsolete("Use the overload that accepts a CancellationToken.")]
-        public Task<ModerationResponse> CreateModeration(string input, string model = null)
-        {
-            return CreateModerationAsync(input, model, CancellationToken.None);
-        }
-
         public Task<ModerationResponse> CreateModerationAsync(string input, string model = null, CancellationToken cancellationToken = default)
         {
             if (input == null)
@@ -34,12 +28,6 @@ namespace OpenAI.SDK.Logic
                 throw new ArgumentException("Input must not be empty.", nameof(input));
             }
             return CreateModerationAsync(new string[] { input }, model, cancellationToken);
-        }
-
-        [Obsolete("Use the overload that accepts a CancellationToken.")]
-        public Task<ModerationResponse> CreateModeration(string[] input, string model = null)
-        {
-            return CreateModerationAsync(input, model, CancellationToken.None);
         }
 
         public async Task<ModerationResponse> CreateModerationAsync(string[] input, string model = null, CancellationToken cancellationToken = default)

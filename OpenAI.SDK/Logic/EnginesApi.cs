@@ -11,7 +11,7 @@ using System.Threading.Tasks;
 
 namespace OpenAI.SDK.Logic
 {
-    [Obsolete]
+    [Obsolete("API is not supported anymore")]
     internal class EnginesApi : BaseApi, IEnginesApi
     {
         public EnginesApi(IHttpClientFactory clientFactory, IOptions<OpenAiOptions> options) : base(clientFactory, options)

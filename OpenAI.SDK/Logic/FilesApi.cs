@@ -27,13 +27,6 @@ namespace OpenAI.SDK.Logic
         }
 
         /// <inheritdoc/>
-        [Obsolete("Use the overload that accepts a CancellationToken.")]
-        public Task<DeleteFileResponse> DeleteFileAsync(string fileId)
-        {
-            return DeleteFileAsync(fileId, CancellationToken.None);
-        }
-
-        /// <inheritdoc/>
         public async Task<DeleteFileResponse> DeleteFileAsync(string fileId, CancellationToken cancellationToken = default)
         {
             if (string.IsNullOrWhiteSpace(fileId))
@@ -42,13 +35,6 @@ namespace OpenAI.SDK.Logic
             }
             var response = await ExecuteRequest<DeleteFileResponse>(HttpMethod.Delete, $"files/{fileId}", cancellationToken).ConfigureAwait(false);
             return response;
-        }
-
-        /// <inheritdoc/>
-        [Obsolete("Use the overload that accepts a CancellationToken.")]
-        public Task<FileDetails> RetrieveFileAsync(string fileId)
-        {
-            return RetrieveFileAsync(fileId, CancellationToken.None);
         }
 
         /// <inheritdoc/>
@@ -63,13 +49,6 @@ namespace OpenAI.SDK.Logic
         }
 
         /// <inheritdoc/>
-        [Obsolete("Use the overload that accepts a CancellationToken.")]
-        public Task<byte[]> RetrieveFileContentAsync(string fileId)
-        {
-            return RetrieveFileContentAsync(fileId, CancellationToken.None);
-        }
-
-        /// <inheritdoc/>
         public async Task<byte[]> RetrieveFileContentAsync(string fileId, CancellationToken cancellationToken = default)
         {
             if (string.IsNullOrWhiteSpace(fileId))
@@ -78,13 +57,6 @@ namespace OpenAI.SDK.Logic
             }
             var content = await ExecuteRawRequestAsync(HttpMethod.Get, $"files/{fileId}/content", cancellationToken).ConfigureAwait(false);
             return content;
-        }
-
-        /// <inheritdoc/>
-        [Obsolete("Use the overload that accepts a CancellationToken.")]
-        public Task<FileDetails> UploadFileAsync(Stream file, string fileName, string purpose)
-        {
-            return UploadFileAsync(file, fileName, purpose, CancellationToken.None);
         }
 
         /// <inheritdoc/>

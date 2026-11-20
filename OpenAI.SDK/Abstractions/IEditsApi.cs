@@ -5,7 +5,7 @@ using System.Threading.Tasks;
 
 namespace OpenAI.SDK.Abstractions
 {
-    [Obsolete]
+    [Obsolete("API is not supported anymore")]
     public interface IEditsApi
     {
         /// <summary>
