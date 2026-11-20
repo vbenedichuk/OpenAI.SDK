@@ -230,7 +230,7 @@ namespace OpenAI.SDK.Logic
                     int read;
                     while ((read = await stream.ReadAsync(chunk, 0, chunk.Length, cancellationToken).ConfigureAwait(false)) > 0)
                     {
-                        await buffer.WriteAsync(chunk, 0, read);
+                        await buffer.WriteAsync(chunk, 0, read, cancellationToken);
                     }
                     return buffer.ToArray();
                 }
@@ -269,7 +269,7 @@ namespace OpenAI.SDK.Logic
                     long total = 0;
                     while (total < maxBytes && (read = await stream.ReadAsync(chunk, 0, (int)Math.Min(chunk.Length, maxBytes - total), cancellationToken).ConfigureAwait(false)) > 0)
                     {
-                        await buffer.WriteAsync(chunk, 0, read);
+                        await buffer.WriteAsync(chunk, 0, read, cancellationToken);
                         total += read;
                     }
 
