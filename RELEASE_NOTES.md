@@ -57,6 +57,9 @@
 - Validation in the multipart methods (`UploadFileAsync`, `CreateImageEditAsync`, `CreateImageVariationAsync`) throws synchronously, before the `Task` is returned.
 - README "Supported APIs" split into supported vs. retired; `IModelsApi` documented.
 - Sample uses `gpt-image-2`, `gpt-4o-mini`, `text-embedding-3-small`.
+- Public member typos corrected (`Temperatue` → `Temperature`, `FimeTunedModel` → `FineTunedModel`, `Alow*` → `Allow*`, `PromptLossWeitghs` → `PromptLossWeight`).
+- Retired APIs (`ICompletionsApi`, `IEditsApi`, `IFineTunesApi`, `IEnginesApi`) are marked `[Obsolete("API is not supported anymore")]`, and both image-variation methods are `[Obsolete]` in favour of `CreateImageEditAsync` with a GPT Image model.
+- `OpenAiApiException`, `OpenAiResponseFormatException` and `OpenAiTimeoutException` implement the recommended `ISerializable` pattern (`GetObjectData`), so they survive serialization round-trips; `ResponseHeaders` is intentionally not serialized and `RetryAfter` is preserved instead.
 
 ### Fixed
 
@@ -74,7 +77,7 @@
 - The sample summarizes generated images (URL or base64 length) instead of dumping `b64_json`; the unused `BlackCircle.png` asset and its copy directive were removed.
 - The sample now reports `OpenAiTimeoutException`/`OpenAiResponseFormatException` through `OpenAiException` (instead of letting them escape) and falls back to `OPENAI_API_KEY` when the user-secrets value is whitespace.
 - `FineTunesApi.ListFineTuneEventsAsync` no longer silently ignores `stream`.
-- `ModerationsApi` rejects null/empty input and the ambiguous `CreateModeration(null)` overload.
+- `ModerationsApi` rejects null/empty input; the ambiguous `CreateModeration(null)` overload was removed.
 - ID/path segments are escaped, `.`/`..` segments and resources escaping the base URL are rejected.
 - `ConfigureAwait(false)` added to prevent sync-over-async deadlocks on .NET Framework.
 - Build warnings and vulnerable transitive dependencies addressed.
@@ -92,11 +95,15 @@
 9. A configured timeout now throws `OpenAiTimeoutException` instead of `OperationCanceledException`; caller cancellation still throws `OperationCanceledException`/`TaskCanceledException`.
 10. `FilesApi`/`ImagesApi`/`ChatApi`/etc. now throw `ArgumentException`/`ArgumentNullException` for missing required arguments where they previously sent an invalid request.
 11. `OpenAiOptions.Timeout` overrides `HttpClient.Timeout`; a `client.Timeout` set through `AddHttpClient` no longer applies.
+12. Methods renamed to the `Async` suffix: `IEditsApi.CreateEdit` → `CreateEditAsync`, `IEmbeddingsApi.CreateEmbeddings` → `CreateEmbeddingsAsync`, `IEnginesApi.RetrieveEngine` → `RetrieveEngineAsync`, `IModerationsApi.CreateModeration` → `CreateModerationAsync`, and `IFineTunesApi.ListFineTuneEvents` → `ListFineTuneEventsAsync`.
+13. The `[Obsolete]` overloads without a `CancellationToken` were removed from every interface; each method now has a single signature with an optional `CancellationToken` parameter.
+14. `ApiCreateEditRespoinse` was renamed to `ApiCreateEditResponse` (typo fix).
+15. Public member typos fixed: `ApiModelPermission.AlowCreateEngine`/`AlowSampling` → `AllowCreateEngine`/`AllowSampling`, `Temperatue` → `Temperature` in `ApiChatCompletionRequest`, `ApiCompletionRequest` and `ApiCreateEditRequest`, `FineTune.FimeTunedModel` → `FineTunedModel`, and `PromptLossWeitghs` → `PromptLossWeight` in `CreateFineTuneRequest`/`FineTuneHyperparams`.
 
 ### Tests
 
-- 92 tests, all passing.
-- New coverage: configuration validation (missing key, invalid/non-HTTP/query/fragment base URL, startup validator, API key trimming), default base URL, image model serialization and `model`/`quality`/`output_format`/`background` propagation in multipart edits, mask filename defaulting, `BaseApi` error path with the 64 KB body cap, request shape (method, auth, content type, null omission), empty bodies with and without `Content-Length`, malformed JSON wrapping for JSON and multipart requests, `RequestUri`/`RetryAfter`/body truncation, URL escaping and path-traversal rejection, timeout enforcement during header wait and body read (including request context and oversized timeouts), cancellation propagation (deterministic, no sleeps), `ChatMessage.Content` string/multi-part round-trip, typed deserialization of file status details, image usage, logprobs, annotations, audio, refusal, token details and model/image metadata, request-shape/validation coverage for embeddings, moderations, models, file listing/deletion and image generation, raw file content download behavior (`Accept` header and `204` empty body), and the sample's exception report for API, format and timeout failures.
+- 95 tests, all passing.
+- New coverage: configuration validation (missing key, invalid/non-HTTP/query/fragment base URL, startup validator, API key trimming), default base URL, image model serialization and `model`/`quality`/`output_format`/`background` propagation in multipart edits, mask filename defaulting, `BaseApi` error path with the 64 KB body cap, request shape (method, auth, content type, null omission), empty bodies with and without `Content-Length`, malformed JSON wrapping for JSON and multipart requests, `RequestUri`/`RetryAfter`/body truncation, URL escaping and path-traversal rejection, timeout enforcement during header wait and body read (including request context and oversized timeouts), cancellation propagation (deterministic, no sleeps), `ChatMessage.Content` string/multi-part round-trip, typed deserialization of file status details, image usage, logprobs, annotations, audio, refusal, token details and model/image metadata, request-shape/validation coverage for embeddings, moderations, models, file listing/deletion and image generation, raw file content download behavior (`Accept` header and `204` empty body), the sample's exception report for API, format and timeout failures, and `ISerializable` round-tripping of `OpenAiApiException`, `OpenAiResponseFormatException` and `OpenAiTimeoutException`.
 
 ### Commits
 
@@ -105,7 +112,20 @@
 - `85d82bf` Add input validation, robust HTTP handling, ConfigureAwait, URL escaping, centralized requests, modern chat DTOs, and stronger tests
 - `bb27863` Clean up cancellation tests and remove nullable warnings
 - `c1cab14` Update README and add release notes
-- A review-driven hardening pass: buffer the response body once, apply the timeout to the whole request, confine resources to the base URL, read plain-text chat content as `string`, and close the related test gaps.
-- A second review pass: typed file status/image usage/chat payloads, dedicated `OpenAiResponseFormatException`/`OpenAiTimeoutException`, 64 KB error-body cap, timeout request context, infinite-timeout named client, mask filename default, and regression tests for each fix.
+- `59637ce` Fix response handling, timeouts and URL containment after code review (buffer the response body once, apply the timeout to the whole request, confine resources to the base URL, read plain-text chat content as `string`, and close the related test gaps)
+- `e34a68d` Describe review-driven hardening in release notes
+- `03aa318` Fix review findings and refresh documentation
+- `16b706d` Fix HTTP timeout and response handling, expand DTOs and image edit options, and update package metadata (typed file status/image usage/chat payloads, dedicated `OpenAiResponseFormatException`/`OpenAiTimeoutException`, 64 KB error-body cap, timeout request context, infinite-timeout named client, mask filename default)
 - `0f786b2` Type remaining response payloads, add timeout context and regression tests, document breaking changes
 - `5bf46a1` Report all SDK exceptions in the sample and add supported-API test coverage
+- `09c5a00` Validate options at startup, trim API keys, reject BaseUrl query/fragment, and clean up sample/tests
+- `9ef5691` Load sample configuration from environment and add coverage
+- `58f2b15` Refactor BaseApi request pipeline and drop sample InternalsVisibleTo
+- `3291213` Sync test count in docs
+- `7dc56ec` Fix Sonar issues (remove obsolete no-token overloads and redundant XML docs)
+- `9113505` Code cleanup
+- `d54c077` Add CancellationToken to remaining request paths
+- `b6321de` Update OpenAiTimeoutException `ISerializable` implementation to the recommended serialization pattern
+- `3b38f3d` Add `ISerializable` support to `OpenAiResponseFormatException`
+- `1d91b94` Documentation fixed; .NET version restored to netstandard2.0
+- `252dcfd` Version 2.0.0 (merge)
